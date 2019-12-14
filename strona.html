@@ -1,0 +1,289 @@
+<html>
+<head>
+<meta charset="utf-8">
+</head>
+<body>
+<canvas id="canvas" width="700" height="700" style="border:1px solid green;"></canvas>
+<div id="lots" style="display: none;">
+	<h1>Wybuchłeś!</h1><br>
+	<button onclick="newgame()">Nowa gra</button>
+</div>
+<div id="wons" style="display: none;">
+	<h1>Wygrałeś!</h1><br>
+	<button onclick="newgame()">Nowa gra</button>
+</div>
+</body>
+</html>
+<script>
+
+var canvas = document.getElementById("canvas");
+var c = canvas.getContext("2d");
+
+var width = 25,
+	height = 25;
+
+var data = [];
+var numbers = [];
+var revealed = [];
+
+var bombs = 0;
+
+var level = 0.03232542;
+var num_of_bombs = 30;
+
+var lost = false;
+	
+function newgame(){
+c.clearRect(0, 0, canvas.width, canvas.height);
+bombs = 0;
+	data = [];
+	numbers = [];
+	revealed = [];
+	init();
+	initnumbers();
+	draw();
+	document.getElementById("lots").style.display = 'none';
+	document.getElementById("wons").style.display = 'none';
+	lost = false;
+}
+
+newgame();
+
+function clickAt(x, y){
+	if(!lost){
+		var wsize = canvas.width / width;
+		var hsize = canvas.height / height;
+		if(!data[y][x]){
+			var numtest = false;
+			if(numbers[y][x] != 0) numtest = true;
+			reveal(y, x);
+			
+			var revealeds = 0;
+			for(var i = 0; i < revealed.length; i++){
+				for(var j = 0; j < revealed[i].length; j++){
+					if(revealed[i][j]) revealeds++;
+				}
+			}
+			
+			if(width*height - bombs == revealeds)
+			{
+				document.getElementById("wons").style.display = 'block';
+			}
+			
+		}else{
+			for(var i in data){
+				for(var j in data[i]){
+					if(data[i][j]){
+						c.beginPath();
+						c.rect(j*wsize, i*hsize, wsize-1, hsize-1);
+						c.fillStyle = 'red';
+						c.fill();
+					}
+				}
+			}
+			lost = true;
+		document.getElementById("lots").style.display = 'block';
+		}
+	}
+}
+
+c.font = '9pt Arial';
+
+function reveal(i, j, stop){
+	if(i >= 0 && i <= height-1 && j >= 0 && j <= width-1 && !revealed[i][j]){
+		var wsize = canvas.width / width;
+		var hsize = canvas.height / height;
+		if(!data[i][j]){
+			c.beginPath();
+			c.fillStyle = 'silver';
+			c.rect(j*wsize, i*hsize, wsize-1, hsize-1);
+			c.fill();
+			c.fillStyle = 'blue';
+			var numtest = false;
+			if(numbers[i][j] != 0){
+				numtest = true;
+				c.font = '9pt Arial';
+				c.fillText(numbers[i][j], j*wsize + 10, i*hsize +15);
+			}
+			
+			revealed[i][j] = true;
+			
+			if(!numtest && !stop){
+				var ti = i - 1,
+					tj = j - 1;
+				for(var k = 0; k < 3; k++){
+					for(var d = 0; d < 3; d++){
+					
+						//alert(i + ", " + j + " ; " + (k) + ", " + (d));
+						if((ti+k) >= 0 && (ti+k) <= height-1 && (tj+d) >= 0 && (tj+d) <= width-1)
+						if(numbers[ti+k][tj+d] != -1){
+							
+							if(numbers[ti+k][tj+d] == 0){
+								reveal(ti+k, tj+d, false);
+							}else if(numbers[ti+k][tj+d] != 0){
+								reveal(ti+k, tj+d, true);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+function init(){
+	for(var i = 0; i < height; i++){
+		data[i] = [];
+		for(var j = 0; j < width; j++){
+			if(Math.random() < 0.001 && bombs < num_of_bombs){
+				data[i][j] = true;
+				bombs++;
+			}else{
+				data[i][j] = false;
+			}
+		}
+	}
+	
+	if(bombs < num_of_bombs){
+		while(bombs < num_of_bombs){
+			for(var i = 0; i < height; i++){
+				for(var j = 0; j < width; j++){
+					if(!data[i][j] && bombs < num_of_bombs && Math.random() < 0.001){
+						data[i][j] = true;
+						bombs++;
+					}
+				}
+			}
+		}
+	}
+}
+
+function initnumbers(){
+	for(var i = 0; i < data.length; i++){
+		numbers[i] = [];
+		revealed[i] = [];
+		for(var j = 0; j < data[i].length; j++){
+			numbers[i][j] = checkNumber2(i, j);
+			revealed[i][j] = false;
+		}
+	}
+}
+
+function checkNumber2(i, j){
+	var bombs = 0;
+	if(!data[i][j]){
+		var ti = i - 1,
+			tj = j - 1;
+		
+		for(var y = 0; y < 3; y++){
+			for(var x = 0; x < 3; x++){
+				if(ti+y >= 0 && ti+y <= height-1 && tj+x >= 0 && tj+x <= width-1){
+					if(data[ti+y][tj+x]) bombs++;
+				}
+			}
+		}
+	}
+	
+	return bombs;
+}
+
+function checkNumber(i, j){
+	var bombs = 0;
+	if(!data[i][j]){
+		if(j > 0 && j < width){
+			if(data[i][j-1])bombs++;
+			if(data[i][j+1])bombs++;
+		}else if( j == 0){
+			if(data[i][j+1]) bombs++;
+		}else if(j == width-1){
+			if(data[i][j-1]) bombs++;
+		}
+		
+		if(i > 0 && i < height-1){
+			if(j > 0 && j < width){
+				if(data[i+1][j-1])bombs++;
+				if(data[i+1][j+1])bombs++;
+				
+				if(data[i-1][j-1])bombs++;
+				if(data[i-1][j+1])bombs++;
+				
+				if(data[i-1][j])bombs++;
+				if(data[i+1][j])bombs++;
+			}else if( j == 0){
+				if(data[i+1][j+1]) bombs++;
+				if(data[i-1][j+1]) bombs++;
+				
+				if(data[i+1][j]) bombs++;
+				if(data[i-1][j]) bombs++;
+			}else if(j == width-1){
+				if(data[i+1][j-1]) bombs++;
+				if(data[i-1][j-1]) bombs++;
+			}
+		}else if(i == 0){
+			if(j > 0 && j < width){
+				/*if(data[i+1][j-1])bombs++;
+				if(data[i+1][j+1])bombs++;
+				if(data[i+1][j])bombs++;*/
+			}else if( j == 0){
+				if(data[i+1][j+1]) bombs++;
+				if(data[i][j+1]) bombs++;
+				if(data[i+1][j]) bombs++;
+			}else if(j == width-1){
+				if(data[i+1][j-1]) bombs++;
+				if(data[i+1][j]) bombs++;
+				if(data[i][j-1]) bombs++;
+			}
+			if(data[i+1][j]) bombs++;
+		}else if(i == height-1){
+			if(j > 0 && j < width){
+				if(data[i-1][j-1])bombs++;
+				if(data[i-1][j+1])bombs++;
+				if(data[i-1][j])bombs++;
+			}else if( j == 0){
+				if(data[i-1][j+1]) bombs++;
+				if(data[i-1][j]) bombs++;
+			}else if(j == width-1){
+				if(data[i-1][j-1]) bombs++;
+				if(data[i-1][j]) bombs++;
+			}
+		}
+		return bombs;
+	}else{
+		return -1;
+	}
+}
+
+function draw(){
+	var wsize = canvas.width / width;
+	var hsize = canvas.height / height;
+			c.fillStyle = 'grey';
+	for(var i = 0; i < data.length; i++){
+		for(var j = 0; j < data[i].length; j++){
+			c.beginPath();
+			c.rect(j*wsize, i*hsize, wsize-1, hsize-1);
+			/*if(data[i][j])
+				c.fillStyle = 'pink';
+			else
+				c.fillStyle = 'grey';*/
+			c.fill();
+		}
+	}
+}
+
+canvas.addEventListener('click', function(e){
+	var bound = canvas.getBoundingClientRect();
+	var x = e.clientX - bound.left;
+	var y = e.clientY - bound.top;
+	
+	var wsize = canvas.width / width;
+	var hsize = canvas.height / height;
+	
+	var xpos = Math.floor(x / wsize);
+	var ypos = Math.floor(y / hsize);
+	
+	clickAt(xpos, ypos);
+	
+});
+
+
+</script>

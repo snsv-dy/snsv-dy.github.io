@@ -1,0 +1,261 @@
+<html>
+<head>
+<meta charset="utf-8">
+</head>
+<body>
+<canvas id="canvas" width="700" height="700" style="border:1px solid green;"></canvas>
+
+</body>
+</html>
+<script>
+var canvas = document.getElementById("canvas");
+var c = canvas.getContext('2d');
+
+var width = 40,
+	height = 40;
+	
+
+var head = {x: 0, y: 0};
+var snake = [];
+var end = {x: 0, y: 0};
+var collect = {x: -1, y: -1};
+
+var xdir = -1;
+var ydir = 0;
+
+var keys = [];
+
+var gamerunning = true;
+
+var points = 0;
+
+function init(){
+	points = 0;
+	c.clearRect(0, 0, canvas.width, canvas.height);
+	head.x = Math.floor(width/2);
+	head.y = Math.floor(height/2);
+	
+	snake = [];
+	
+	for(var i = 0; i < 3; i++){
+		snake.push({x: head.x, y: head.y});
+		head.x--;
+	}
+	
+	end.x = snake[snake.length-1].x;
+	end.y = snake[snake.length-1].y;
+	
+	for(var i in snake)
+		dot(snake[i].x, snake[i].y, 'blue');
+		
+	collect.x = Math.floor(Math.random()*width);
+	collect.y = Math.floor(Math.random()*height);
+		dot(collect.x, collect.y, 'red');
+		
+	xdir = -1;
+	ydir = 0;
+	
+	gamerunning = true;
+}
+
+function snek(){
+	this.snek_array = [];
+	this.head = new _v(0, 0);
+	this.butt = new _v(1, 0);
+	
+	this.dir = new _v(-1, 0);
+	
+	this.color = 'blue';
+	
+	this.init = function(){
+		this.head.x = Math.floor(width / 2);
+		this.head.y = Math.floor(height / 2);
+		
+		for(var i = 0; i < 3; i++){
+			this.snek_array.push(new _v(this.head.x, this.head.y));
+			this.head.x -= 1;
+		}
+		
+		this.butt.x = this.snek_array[this.snek_array.length-1].x;
+		this.butt.y = this.snek_array[this.snek_array.length-1].y;
+		
+		for(var i in this.snek_array)
+			dot(snake[i].x, snake[i].y, 'blue');
+		
+	}
+	
+	this.update = function(){
+		var keys = getKeys();
+		
+		this.head.x += this.dir.x;
+		if(this.head.x < 0) this.head.x = width;
+		else if(this.head.x >= width) this.head.x = 0;
+		
+		this.head.y += this.dir.y;
+		if(this.head.y < 0) this.head.y = height;
+		else if(this.head.y >= height) this.head.y = 0;
+		
+		for(var i in sneks){
+			var sn = sneks[i].snek_array;
+			for(var j in this.snek_array){
+				for(var k in sn){
+					if(this.snek_array[i].x == sn[i].x && this.snek_array[i].y == sn[i].y)
+						alert("Koniec gyr.");
+				}
+			}
+		}
+	}
+	
+	this.draw = function(){
+		dot(this.head.x, this.head.y, this.color);
+		dot(this.butt.x, this.butt.y, 'white');
+	}
+}
+
+function update(){
+	getkeys();
+
+	head.x += xdir;
+	if(head.x < 0) head.x = width;
+	else if(head.x > width) head.x = 0;
+	head.y += ydir;
+	if(head.y < 0) head.y = height;
+	else if(head.y > height) head.y = 0;
+	
+	for(var i in snake){
+		if(head.x == snake[i].x && head.y == snake[i].y){
+			gamerunning = false;
+			alert("Przegrałeś");
+		}
+	}
+	
+	snake.unshift({x: head.x, y: head.y});
+	
+	if(head.x == collect.x && head.y == collect.y){
+		collect.x = Math.floor(Math.random()*width);
+		collect.y = Math.floor(Math.random()*height);
+		dot(collect.x, collect.y, 'red');
+		points++;
+	}else{
+		var pop = snake.pop();
+		end.x = pop.x;
+		end.y = pop.y;
+	}
+	
+	
+}
+
+
+function getkeys(){
+	var up = false, down = false, left = false, right = false;
+	var w = false, s = false, a = false, d = false;
+	
+	if(keys[37]){
+	if(xdir != 1){
+		xdir = -1;
+		ydir = 0;
+		left = true;
+		}
+	}
+	
+	if(keys[38]){
+	if(ydir != 1){
+		xdir = 0;
+		ydir = -1;
+		down = true;
+		}
+	}
+	
+	if(keys[39]){
+	if(xdir != -1){
+		xdir = 1;
+		ydir = 0;
+		right = true;
+		}
+	}
+	
+	if(keys[40]){
+	if(ydir != -1){
+		xdir = 0;
+		ydir = 1;
+		up = true;
+		}
+	}
+	
+	return {up: up, down: down, left: left, right: right};
+}
+
+function draw(){
+	dot(head.x, head.y, 'blue');
+	dot(end.x, end.y, 'white');
+	dot(collect.x, collect.y, 'red');
+	c.beginPath();
+	c.rect(0, 0, 40, 13);
+	c.fillStyle = 'white';
+	c.fill();
+	
+	c.beginPath();
+	c.font = '13pt Arial';
+	c.fillStyle = 'black';
+	c.fillText(points, 0, 14);
+}
+
+function dot(x, y, col){
+	var xsize = Math.floor(canvas.width / width),
+		ysize = Math.floor(canvas.height / height);
+	if(x >= 0 && x <= width && y >= 0 && y <= height){
+		c.beginPath();
+		c.rect(x*xsize, y*ysize, xsize, ysize);
+		c.fillStyle = col;
+		c.fill();
+	}
+}
+
+init();
+
+setInterval(function(){
+	if(gamerunning){
+		update();
+		draw();
+	}else{
+		init();
+	}
+}, 100);
+
+document.body.addEventListener('keydown', function(e){
+	switch(e.keyCode){
+		case 37:
+		if(xdir != 1){
+			xdir = -1;
+			ydir = 0;
+			}
+		break;
+	
+		case 38:
+			if(ydir != 1){
+			xdir = 0;
+			ydir = -1;
+			}
+		break;
+		
+		case 39:
+			if(xdir != -1){
+			xdir = 1;
+			ydir = 0;
+			}
+		break;
+		
+		case 40:
+			if(ydir != -1){
+			xdir = 0;
+			ydir = 1;
+			}
+		break;
+	}
+});
+
+function _v(x, y){
+	this.x = x;
+	this.y = y;
+}
+</script>

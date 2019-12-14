@@ -1,0 +1,872 @@
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+	#wrap{margin:auto;border:1px solid red;display:block;width:1006px;}
+	#hud{height:700px;width:300px;background: #EDEDED;display: inline-block;float: right;}
+	#stats{background: red;display:block;font-family: Calibri;}
+	.stat{background:yellow;display:inline;}
+	#edit_tower{background: cyan;display:none;}
+	#add_tower_option{background: -moz-linear-gradient(top, cyan, #06f6f6);height:20px;padding:5px;display:block;}
+	#add_tower_option:hover{background:#B9B9FF;}
+	#cancel_add_tower{display:none;}
+</style>
+</head>
+<body>
+<div id ="wrap">
+<canvas id="canvas" width="700" height="700" style="border:1px solid green;display:inline-block;"></canvas>
+<div id="hud">
+	<div id="stats">
+		<div class="stat">Pieniądze: </div><div class="stat" id="stat_money">12</div>$<br>
+		<div class="stat">Życie: </div><div class="stat" id="stat_health">12</div>
+	</div>
+	<div id="add_tower">
+		<div id="tower_select">
+			
+		</div>
+	</div>
+	<div id="cancel_add_tower">
+		<button onclick="cancelTower()">anuluj</button>
+	</div>
+	<div id="edit_tower">
+		<span class="stat">Typ: </span><span class="stat" id="tower_stat_type">wieża1</span><br>
+		<div id="tower_stats"></div>
+		<div id="upgrade">
+			<button onclick="upgrade_tower()">Ulepsz</button>
+		</div>
+		<button id="delete_tw">sprzedaj</button>
+	</div>
+</div>
+</div>
+</body>
+</html>
+<script>
+	var tower_select = document.getElementById("tower_select");
+	var add_tower = document.getElementById("add_tower");
+	var tws = [];
+	
+	for(var i = 1; i <= 3; i++){
+		var tower_div_t = document.createElement("div");
+		tower_div_t.id = "add_tower_option";
+		tower_div_t.style.width = "calc(100% - 10px)";
+		tower_div_t.innerHTML = "Wieża"+i;
+		add_tower.appendChild(tower_div_t);
+	}
+	
+	add_tower.addEventListener('click', function (e){
+		var const_heigth = 30;
+		var bounds = add_tower.getBoundingClientRect();
+		var x = e.clientX - bounds.left;
+		var y = e.clientY - bounds.top;
+		
+		var objy = Math.floor(y/const_heigth)+1;
+		addTower(objy);
+	});
+	
+	var tower_stats = document.getElementById("edit_tower");
+	var ts_tower_type = document.getElementById("tower_stat_type");
+	var cancel_tower = document.getElementById("cancel_add_tower");
+	var delete_tower = document.getElementById("delete_tw");
+	var divmoney = document.getElementById("stat_money");
+	var divhealth = document.getElementById("stat_health");
+	
+</script>
+<script>
+
+var tower_templemate = [];
+
+
+//{prop: "this.", val: }
+function init_tower_templamate(){
+	var t1 = new tower();
+	t1.speed = 0.3;
+	tower_templemate.push(t1);
+	var t2 = new tower();
+	t2.type = 2;
+	t2.speed = 0.6;
+	t2.range = 5;
+	t2.value = 40;
+	t2.color = "blue";
+	t2.delay = 20;
+	t2.range = 3;
+	var t2_b = new bullet();
+	t2_b.power = 2;
+	t2_b.shards = 5;
+	t2_b.explosion_range = 10;
+	
+	t2.upgrades = [
+		{values: [{prop: "this.bullet.speed", val: 0.4}], cost: 40},
+		{values: [{prop: "this.bullet.power", val: 2}, {prop: "this.bullet.explosion_range", val: 15}, {prop: "this.bullet.shards", val: 15}], cost: 50},
+		{values: [{prop: "this.delay", val: 15}, {prop: "this.bullet.explosion_range", val: 20}, {prop: "this.bullet.shards", val: 25}], cost: 70}
+	];
+	
+	t2.stats = [
+		{name: "Siła", value: "towers[selected_tower].bullet.power"},
+		{name: "Prędkość pocisku", value: "towers[selected_tower].bullet.speed"},
+		{name: "Zasięg", value: "towers[selected_tower].range"},
+		{name: "Firerate", value: "(1000/32/towers[selected_tower].delay).toFixed(2)+'/s'"},
+		{name: "Zasięg eksplozji", value: "towers[selected_tower].bullet.explosion_range"},
+		{name: "Liczba odłamków", value: "towers[selected_tower].bullet.shards"},
+		{name: "Poziom ulepszenia", value: "towers[selected_tower].upgrade_state+1"},
+		{name: "Wartość po sprzedaży", value: "towers[selected_tower].value * 0.8"},
+	];
+	
+	t2_b.onhit = function(enem, j){
+		//enems[enem].health -= bullets[j].power;
+		enems[enem].health -= this.power;
+		var bullts = [];
+		var t1 = {x: 0, y: 0.1};
+		//var angle1 = 360 / bullets[j].shards;
+		var angle1 = 360 / this.shards;
+		for(var i = 0; i < this.shards; i++)
+			bullts.push(rotatePoint(t1, angle1*i));
+			
+			
+		for(var i in bullts){
+			var t_bullet = new bullet();
+			t_bullet.v.x = this.v.x;
+			t_bullet.v.y = this.v.y;
+			t_bullet.vel.x = bullts[i].x;
+			t_bullet.vel.y = bullts[i].y;
+			t_bullet.maxlife = this.explosion_range;
+			
+			bullets.push(t_bullet);
+		}
+	}
+	t2.bullet = t2_b;
+	tower_templemate.push(t2);
+	var t3 = new tower();
+	t3.type = 3;
+	t3.delay = 50;
+	t3.color = '#0076ea';
+	t3.range = 2;
+	t3.upgrades = [
+		{values: [{prop: "this.range", val: 3.5}], cost: 35},
+		{values: [{prop: "this.delay", val: 40}], cost: 75}
+	];
+	t3.stats = [
+		{name: "Zasięg", value: "towers[selected_tower].range"},
+		{name: "Firerate", value: "(1000/32/towers[selected_tower].delay).toFixed(2)+'/s'"},
+		{name: "Poziom ulepszenia", value: "towers[selected_tower].upgrade_state+1"},
+		{name: "Wartość po sprzedaży", value: "towers[selected_tower].value * 0.8"},
+	];
+	t3.shoot = function(i, tw){
+		for(var j in enems){
+			if(len(this.v, enems[j].v) < this.range){
+				enems[j].frozen = true;
+			}
+		}
+	}
+	tower_templemate.push(t3);
+	
+	for(var i = 0; i < tower_templemate; i++)
+		tower_templemate[i].type = i+1;
+}
+
+var cost_table = [20, 40];
+
+function update_stats(){
+	divmoney.innerHTML = money;
+	divhealth.innerHTML = health;
+}
+
+delete_tower.addEventListener('click', function(){
+	if(selected_tower != -1){
+		money += towers[selected_tower].value * 0.8;
+		towers.splice(selected_tower, 1);
+		selected_tower = -1;
+		update_select_tower();
+		update_stats();
+	}
+});
+
+function addTower(num){
+	if(money >= tower_templemate[num-1].value){
+		add_tower.style.display = 'none';
+		cancel_tower.style.display = 'block';
+		edit = true;
+		add_tower_mode = true;
+		add_tower_num = num-1;
+	}
+}
+
+function cancelTower(){
+	add_tower.style.display = 'block';
+	cancel_tower.style.display = 'none';
+	edit = false;
+	add_tower_mode = false;
+}
+
+function mouseclick(){
+	var goahead = true;
+	var id = -1;
+	for(var i in towers){
+		if(cursor.x == towers[i].v.x && cursor.y == towers[i].v.y){
+			selected_tower = i;
+			goahead = false;
+			break;
+		}
+	}
+	
+	if(edit){
+		for(var i in map.path_point){
+			if(cursor.x == map.path_point[i].x && cursor.y == map.path_point[i].y){
+				goahead = false;
+				break;
+			}
+		}
+	}
+	
+	if(goahead){
+		
+		if(add_tower_mode){
+			if(money >= tower_templemate[add_tower_num].value){
+				var t = copyObject(tower_templemate[add_tower_num]);//new tower();
+				//t.speed = tower_templemate[add_tower_num].speed;
+				t.v.x = cursor.x;
+				t.v.y = cursor.y;
+				money -= t.value;
+				towers.push(t);
+				selected_tower = towers.length-1;
+				update_select_tower();
+				cancelTower();
+				update_stats();
+			}
+		}else{
+			selected_tower = -1;
+		}
+	}
+			update_select_tower();
+}
+
+function update_select_tower(){
+	if(selected_tower != -1){
+		tower_stats.style.display = "block";
+		ts_tower_type.innerHTML = towers[selected_tower].type;
+		
+		var str = "<table>";
+		
+		var stats = towers[selected_tower].stats;
+		for(var i in stats){
+			str += "<tr>";
+			str += "<td>" + stats[i].name + "</td><td>" + eval(stats[i].value) + "</td>";
+			str += "</tr>";
+		}
+		
+		str += "</table>";
+		
+		/*var str = '<table><tr><td>Siła</td><td>' + towers[selected_tower].bullet.power + '</td></tr>' +
+			'<tr><td>Prędkość pocisku</td><td>' + towers[selected_tower].bullet.speed + '</td></tr>' + 
+			'<tr><td>Zasięg</td><td>' + towers[selected_tower].range + '</td></tr>' + 
+			'<tr><td>Firerate</td><td>' + ((1000/32)/towers[selected_tower].delay).toFixed(2) + '/s</td></tr>' + 
+			'<tr><td>Poziom ulepszenia</td><td>' + (towers[selected_tower].upgrade_state+1) + '</td></tr>' +
+			'<tr><td>Wartość po sprzedaży</td><td>' + Math.floor(towers[selected_tower].value * 0.8) + '</td></tr>' + '</table>';*/
+			document.getElementById("tower_stats").innerHTML = str;
+		
+	}else{
+		tower_stats.style.display = "none";
+	}
+}
+
+function upgrade_tower(){
+	towers[selected_tower].upgrade();
+	update_select_tower();
+}
+	
+var enem_templemate = [];
+function init_enem_templemate(){
+	var t1 = new enem();
+	t1.speed = 0.05;
+	t1.maxhealth = 10;
+	t1.health = 10;
+	t1.value = 2;
+	t1.type = 0;
+	enem_templemate.push(t1);
+	var t2 = new enem();
+	t2.speed = 0.075;
+	t2.maxhealth = 20;
+	t2.health = 20;
+	t2.value = 6;
+	t2.type = 1;
+	enem_templemate.push(t2);
+	var t3 = new enem();
+	t3.speed = 0.1;
+	t3.maxhealth = 30;
+	t3.health = 30;
+	t3.value = 10;
+	t3.type = 2;
+	enem_templemate.push(t3);
+	var t4 = new enem();
+	t4.speed = 0.2;
+	t4.maxhealth = 70;
+	t4.health = 70;
+	t4.value = 15;
+	t4.type = 3;
+	t4.data = JSON.parse('[{"x":0,"y":0.3},{"x":-0.08816778784387097,"y":0.1213525491562421},{"x":-0.285316954888546,"y":0.09270509831248423},{"x":-0.14265847744427304,"y":-0.04635254915624211},{"x":-0.17633557568774197,"y":-0.24270509831248419},{"x":-1.6653345369377347e-17,"y":-0.15},{"x":0.1763355756877419,"y":-0.2427050983124842},{"x":0.142658477444273,"y":-0.04635254915624212},{"x":0.2853169548885461,"y":0.09270509831248416},{"x":0.08816778784387098,"y":0.12135254915624209}]');
+	t4.draw = function(){
+		c.beginPath();
+		c.moveTo(ti(this.data[0].x + this.v.x).x, ti(this.data[0].y + this.v.y).y);
+		for(var i in this.data){
+			c.lineTo(ti(this.data[i].x + this.v.x).x, ti(this.data[i].y + this.v.y).y);
+		}
+		c.lineTo(ti(this.data[0].x + this.v.x).x, ti(this.data[0].y + this.v.y).y);
+		c.fillStyle = 'purple';
+		c.fill();
+		
+		var heal = this.health / this.maxhealth;
+		c.beginPath();
+		c.rect(ti(this.v.x - 0.5).x, ti(this.v.y + 0.5).y, heal*square, 6);
+		c.fillStyle = 'lime';
+		c.fill();
+	}
+	enem_templemate.push(t4);
+}
+
+var selected_tower = -1;
+
+var canvas = document.getElementById("canvas");
+canvas.addEventListener('click', mouseclick);
+var c = canvas.getContext('2d');
+c.lineJoin = 'round';
+
+var square = canvas.width / 18;
+
+var map = JSON.parse('{"path":[{"x":-7.5,"y":7.5},{"x":-7.5,"y":5.5},{"x":7.5,"y":5.5},{"x":7.5,"y":2.5},{"x":-7.5,"y":2.5},{"x":-7.5,"y":-0.5},{"x":7.5,"y":-0.5},{"x":7.5,"y":-3.5},{"x":-7.5,"y":-3.5},{"x":-7.5,"y":-6.5},{"x":7.5,"y":-6.5},{"x":7.5,"y":-8.5}],"path_point":[{"x":-7.5,"y":7.5},{"x":-7.5,"y":6.5},{"x":-7.5,"y":5.5},{"x":-6.5,"y":5.5},{"x":-5.5,"y":5.5},{"x":-4.5,"y":5.5},{"x":-3.5,"y":5.5},{"x":-2.5,"y":5.5},{"x":-1.5,"y":5.5},{"x":-0.5,"y":5.5},{"x":0.5,"y":5.5},{"x":1.5,"y":5.5},{"x":2.5,"y":5.5},{"x":3.5,"y":5.5},{"x":4.5,"y":5.5},{"x":5.5,"y":5.5},{"x":6.5,"y":5.5},{"x":7.5,"y":5.5},{"x":7.5,"y":4.5},{"x":7.5,"y":3.5},{"x":7.5,"y":2.5},{"x":6.5,"y":2.5},{"x":5.5,"y":2.5},{"x":4.5,"y":2.5},{"x":3.5,"y":2.5},{"x":2.5,"y":2.5},{"x":1.5,"y":2.5},{"x":0.5,"y":2.5},{"x":-0.5,"y":2.5},{"x":-1.5,"y":2.5},{"x":-2.5,"y":2.5},{"x":-3.5,"y":2.5},{"x":-4.5,"y":2.5},{"x":-5.5,"y":2.5},{"x":-6.5,"y":2.5},{"x":-7.5,"y":2.5},{"x":-7.5,"y":1.5},{"x":-7.5,"y":0.5},{"x":-7.5,"y":-0.5},{"x":-6.5,"y":-0.5},{"x":-5.5,"y":-0.5},{"x":-4.5,"y":-0.5},{"x":-3.5,"y":-0.5},{"x":-2.5,"y":-0.5},{"x":-1.5,"y":-0.5},{"x":-0.5,"y":-0.5},{"x":0.5,"y":-0.5},{"x":1.5,"y":-0.5},{"x":2.5,"y":-0.5},{"x":3.5,"y":-0.5},{"x":4.5,"y":-0.5},{"x":5.5,"y":-0.5},{"x":6.5,"y":-0.5},{"x":7.5,"y":-0.5},{"x":7.5,"y":-1.5},{"x":7.5,"y":-2.5},{"x":7.5,"y":-3.5},{"x":6.5,"y":-3.5},{"x":5.5,"y":-3.5},{"x":4.5,"y":-3.5},{"x":3.5,"y":-3.5},{"x":2.5,"y":-3.5},{"x":1.5,"y":-3.5},{"x":0.5,"y":-3.5},{"x":-0.5,"y":-3.5},{"x":-1.5,"y":-3.5},{"x":-2.5,"y":-3.5},{"x":-3.5,"y":-3.5},{"x":-4.5,"y":-3.5},{"x":-5.5,"y":-3.5},{"x":-6.5,"y":-3.5},{"x":-7.5,"y":-3.5},{"x":-7.5,"y":-4.5},{"x":-7.5,"y":-5.5},{"x":-7.5,"y":-6.5},{"x":-6.5,"y":-6.5},{"x":-5.5,"y":-6.5},{"x":-4.5,"y":-6.5},{"x":-3.5,"y":-6.5},{"x":-2.5,"y":-6.5},{"x":-1.5,"y":-6.5},{"x":-0.5,"y":-6.5},{"x":0.5,"y":-6.5},{"x":1.5,"y":-6.5},{"x":2.5,"y":-6.5},{"x":3.5,"y":-6.5},{"x":4.5,"y":-6.5},{"x":5.5,"y":-6.5},{"x":6.5,"y":-6.5},{"x":7.5,"y":-6.5},{"x":7.5,"y":-7.5},{"x":7.5,"y":-8.5}],"spawn_point":{"x":-7.5,"y":9.5}}');
+/*map = JSON.parse('{"path":[{"x":-7.5,"y":-6.5},{"x":1.5,"y":-7.5},{"x":7.5,"y":-3.5},{"x":6.5,"y":3.5},{"x":1.5,"y":6.5},{"x":-5.5,"y":6.5},{"x":-6.5,"y":3.5},{"x":-4.5,"y":-0.5},{"x":-0.5,"y":-4.5},{"x":4.5,"y":-0.5},{"x":0.5,"y":3.5},{"x":-2.5,"y":3.5}],"path_point":[{"x":-7.5,"y":-6.5},{"x":-6.5,"y":-6.5},{"x":-5.5,"y":-6.5},{"x":-4.5,"y":-6.5},{"x":-3.5,"y":-6.5},{"x":-3.5,"y":-7.5},{"x":-4.5,"y":-7.5},{"x":-5.5,"y":-7.5},{"x":-2.5,"y":-7.5},{"x":-1.5,"y":-7.5},{"x":-0.5,"y":-7.5},{"x":0.5,"y":-7.5},{"x":1.5,"y":-7.5},{"x":-0.5,"y":-6.5},{"x":-1.5,"y":-6.5},{"x":-2.5,"y":-6.5},{"x":2.5,"y":-7.5},{"x":2.5,"y":-6.5},{"x":3.5,"y":-6.5},{"x":3.5,"y":-5.5},{"x":4.5,"y":-5.5},{"x":5.5,"y":-5.5},{"x":5.5,"y":-4.5},{"x":6.5,"y":-4.5},{"x":6.5,"y":-3.5},{"x":7.5,"y":-3.5},{"x":7.5,"y":-4.5},{"x":7.5,"y":-2.5},{"x":7.5,"y":-1.5},{"x":7.5,"y":-0.5},{"x":6.5,"y":-0.5},{"x":6.5,"y":0.5},{"x":6.5,"y":1.5},{"x":6.5,"y":2.5},{"x":6.5,"y":3.5},{"x":7.5,"y":0.5},{"x":7.5,"y":1.5},{"x":5.5,"y":3.5},{"x":5.5,"y":4.5},{"x":4.5,"y":4.5},{"x":4.5,"y":5.5},{"x":3.5,"y":5.5},{"x":3.5,"y":4.5},{"x":2.5,"y":5.5},{"x":2.5,"y":6.5},{"x":1.5,"y":6.5},{"x":1.5,"y":5.5},{"x":0.5,"y":6.5},{"x":-0.5,"y":6.5},{"x":-1.5,"y":6.5},{"x":-2.5,"y":6.5},{"x":-3.5,"y":6.5},{"x":-4.5,"y":6.5},{"x":-5.5,"y":6.5},{"x":-5.5,"y":5.5},{"x":-5.5,"y":4.5},{"x":-6.5,"y":4.5},{"x":-6.5,"y":3.5},{"x":-6.5,"y":2.5},{"x":-5.5,"y":2.5},{"x":-5.5,"y":1.5},{"x":-5.5,"y":0.5},{"x":-4.5,"y":0.5},{"x":-4.5,"y":-0.5},{"x":-6.5,"y":5.5},{"x":-3.5,"y":-0.5},{"x":-3.5,"y":-1.5},{"x":-4.5,"y":-1.5},{"x":-3.5,"y":-2.5},{"x":-2.5,"y":-2.5},{"x":-2.5,"y":-1.5},{"x":-2.5,"y":-3.5},{"x":-1.5,"y":-3.5},{"x":-1.5,"y":-2.5},{"x":-1.5,"y":-4.5},{"x":-0.5,"y":-4.5},{"x":0.5,"y":-4.5},{"x":0.5,"y":-3.5},{"x":1.5,"y":-3.5},{"x":1.5,"y":-2.5},{"x":2.5,"y":-2.5},{"x":2.5,"y":-1.5},{"x":3.5,"y":-1.5},{"x":3.5,"y":-0.5},{"x":4.5,"y":-0.5},{"x":3.5,"y":0.5},{"x":4.5,"y":0.5},{"x":2.5,"y":1.5},{"x":1.5,"y":2.5},{"x":3.5,"y":1.5},{"x":2.5,"y":0.5},{"x":1.5,"y":1.5},{"x":2.5,"y":2.5},{"x":1.5,"y":3.5},{"x":0.5,"y":2.5},{"x":0.5,"y":3.5},{"x":-0.5,"y":3.5},{"x":-1.5,"y":3.5},{"x":-2.5,"y":3.5}],"spawn_point":{"x":-9.5,"y":-5.5}}');*/
+/*map = JSON.parse('{"path":[{"x":-7.5,"y":7.5},{"x":-7.5,"y":-7.5},{"x":7.5,"y":-7.5},{"x":7.5,"y":6.5},{"x":-5.5,"y":6.5},{"x":-5.5,"y":-5.5},{"x":5.5,"y":-5.5},{"x":5.5,"y":4.5},{"x":-3.5,"y":4.5},{"x":-3.5,"y":-3.5},{"x":3.5,"y":-3.5},{"x":3.5,"y":2.5},{"x":-1.5,"y":2.5},{"x":-1.5,"y":-1.5},{"x":1.5,"y":-1.5},{"x":1.5,"y":0.5},{"x":0.5,"y":0.5}],"path_point":[{"x":-7.5,"y":7.5},{"x":-7.5,"y":6.5},{"x":-7.5,"y":5.5},{"x":-7.5,"y":4.5},{"x":-7.5,"y":3.5},{"x":-7.5,"y":2.5},{"x":-7.5,"y":1.5},{"x":-7.5,"y":0.5},{"x":-7.5,"y":-0.5},{"x":-7.5,"y":-1.5},{"x":-7.5,"y":-2.5},{"x":-7.5,"y":-3.5},{"x":-7.5,"y":-4.5},{"x":-7.5,"y":-5.5},{"x":-7.5,"y":-6.5},{"x":-7.5,"y":-7.5},{"x":-6.5,"y":-7.5},{"x":-5.5,"y":-7.5},{"x":-4.5,"y":-7.5},{"x":-3.5,"y":-7.5},{"x":-2.5,"y":-7.5},{"x":-1.5,"y":-7.5},{"x":-0.5,"y":-7.5},{"x":0.5,"y":-7.5},{"x":1.5,"y":-7.5},{"x":2.5,"y":-7.5},{"x":3.5,"y":-7.5},{"x":4.5,"y":-7.5},{"x":5.5,"y":-7.5},{"x":6.5,"y":-7.5},{"x":7.5,"y":-7.5},{"x":7.5,"y":-6.5},{"x":7.5,"y":-5.5},{"x":7.5,"y":-4.5},{"x":7.5,"y":-3.5},{"x":7.5,"y":-2.5},{"x":7.5,"y":-1.5},{"x":7.5,"y":-0.5},{"x":7.5,"y":0.5},{"x":7.5,"y":1.5},{"x":7.5,"y":2.5},{"x":7.5,"y":3.5},{"x":7.5,"y":4.5},{"x":7.5,"y":5.5},{"x":7.5,"y":6.5},{"x":6.5,"y":6.5},{"x":5.5,"y":6.5},{"x":4.5,"y":6.5},{"x":3.5,"y":6.5},{"x":2.5,"y":6.5},{"x":1.5,"y":6.5},{"x":0.5,"y":6.5},{"x":-0.5,"y":6.5},{"x":-1.5,"y":6.5},{"x":-2.5,"y":6.5},{"x":-3.5,"y":6.5},{"x":-4.5,"y":6.5},{"x":-5.5,"y":6.5},{"x":-5.5,"y":5.5},{"x":-5.5,"y":4.5},{"x":-5.5,"y":3.5},{"x":-5.5,"y":2.5},{"x":-5.5,"y":1.5},{"x":-5.5,"y":0.5},{"x":-5.5,"y":-0.5},{"x":-5.5,"y":-1.5},{"x":-5.5,"y":-2.5},{"x":-5.5,"y":-3.5},{"x":-5.5,"y":-4.5},{"x":-5.5,"y":-5.5},{"x":-4.5,"y":-5.5},{"x":-3.5,"y":-5.5},{"x":-2.5,"y":-5.5},{"x":-1.5,"y":-5.5},{"x":-0.5,"y":-5.5},{"x":0.5,"y":-5.5},{"x":1.5,"y":-5.5},{"x":2.5,"y":-5.5},{"x":3.5,"y":-5.5},{"x":4.5,"y":-5.5},{"x":5.5,"y":-5.5},{"x":5.5,"y":-4.5},{"x":5.5,"y":-3.5},{"x":5.5,"y":-2.5},{"x":5.5,"y":-1.5},{"x":5.5,"y":-0.5},{"x":5.5,"y":0.5},{"x":5.5,"y":1.5},{"x":5.5,"y":2.5},{"x":5.5,"y":3.5},{"x":5.5,"y":4.5},{"x":4.5,"y":4.5},{"x":3.5,"y":4.5},{"x":2.5,"y":4.5},{"x":1.5,"y":4.5},{"x":0.5,"y":4.5},{"x":-0.5,"y":4.5},{"x":-1.5,"y":4.5},{"x":-2.5,"y":4.5},{"x":-3.5,"y":4.5},{"x":-3.5,"y":3.5},{"x":-3.5,"y":2.5},{"x":-3.5,"y":1.5},{"x":-3.5,"y":0.5},{"x":-3.5,"y":-0.5},{"x":-3.5,"y":-1.5},{"x":-3.5,"y":-2.5},{"x":-3.5,"y":-3.5},{"x":-2.5,"y":-3.5},{"x":-1.5,"y":-3.5},{"x":-0.5,"y":-3.5},{"x":0.5,"y":-3.5},{"x":1.5,"y":-3.5},{"x":2.5,"y":-3.5},{"x":3.5,"y":-3.5},{"x":3.5,"y":-2.5},{"x":3.5,"y":-1.5},{"x":3.5,"y":-0.5},{"x":3.5,"y":0.5},{"x":3.5,"y":1.5},{"x":3.5,"y":2.5},{"x":2.5,"y":2.5},{"x":1.5,"y":2.5},{"x":0.5,"y":2.5},{"x":-0.5,"y":2.5},{"x":-1.5,"y":2.5},{"x":-1.5,"y":1.5},{"x":-1.5,"y":0.5},{"x":-1.5,"y":-0.5},{"x":-1.5,"y":-1.5},{"x":-0.5,"y":-1.5},{"x":0.5,"y":-1.5},{"x":1.5,"y":-1.5},{"x":1.5,"y":-0.5},{"x":1.5,"y":0.5},{"x":0.5,"y":0.5}],"spawn_point":{"x":-7.5,"y":9.5}}');*/
+/*map = JSON.parse('{"path":[{"x":-7.5,"y":7.5},{"x":-7.5,"y":-7.5},{"x":7.5,"y":-7.5},{"x":7.5,"y":7.5},{"x":-5.5,"y":6.5},{"x":-4.5,"y":-5.5},{"x":5.5,"y":-4.5},{"x":4.5,"y":5.5},{"x":-3.5,"y":4.5},{"x":-2.5,"y":-2.5},{"x":3.5,"y":-1.5},{"x":2.5,"y":3.5},{"x":-1.5,"y":3.5},{"x":-7.5,"y":6.5},{"x":-6.5,"y":-7.5},{"x":7.5,"y":-6.5},{"x":6.5,"y":7.5},{"x":-5.5,"y":5.5},{"x":-3.5,"y":-5.5},{"x":5.5,"y":-3.5},{"x":3.5,"y":5.5},{"x":-3.5,"y":3.5},{"x":-1.5,"y":-2.5},{"x":3.5,"y":-0.5},{"x":1.5,"y":3.5},{"x":-2.5,"y":1.5},{"x":4.5,"y":-10.5}],"path_point":[{"x":-11.5,"y":4.5},{"x":-10.5,"y":4.5},{"x":-9.5,"y":4.5},{"x":-8.5,"y":5.5},{"x":-6.5,"y":5.5},{"x":-5.5,"y":5.5},{"x":-3.5,"y":5.5},{"x":-2.5,"y":5.5},{"x":-0.5,"y":5.5},{"x":1.5,"y":5.5},{"x":3.5,"y":5.5},{"x":5.5,"y":5.5},{"x":7.5,"y":5.5},{"x":8.5,"y":5.5},{"x":10.5,"y":4.5},{"x":12.5,"y":4.5},{"x":12.5,"y":3.5},{"x":12.5,"y":2.5},{"x":11.5,"y":2.5},{"x":10.5,"y":1.5},{"x":7.5,"y":-0.5},{"x":5.5,"y":-0.5},{"x":4.5,"y":-1.5},{"x":2.5,"y":-2.5},{"x":1.5,"y":-3.5},{"x":-1.5,"y":-4.5},{"x":-2.5,"y":-4.5},{"x":-3.5,"y":-5.5},{"x":-4.5,"y":-5.5},{"x":-5.5,"y":-6.5},{"x":-4.5,"y":-6.5},{"x":-1.5,"y":-5.5},{"x":-0.5,"y":-5.5},{"x":0.5,"y":-5.5},{"x":1.5,"y":-5.5},{"x":4.5,"y":-5.5},{"x":5.5,"y":-5.5},{"x":6.5,"y":-6.5},{"x":7.5,"y":-6.5},{"x":8.5,"y":-6.5},{"x":8.5,"y":-7.5},{"x":7.5,"y":-7.5},{"x":6.5,"y":-8.5},{"x":5.5,"y":-9.5},{"x":4.5,"y":-9.5},{"x":2.5,"y":-10.5},{"x":1.5,"y":-10.5},{"x":-1.5,"y":-11.5},{"x":-2.5,"y":-11.5},{"x":-2.5,"y":-12.5},{"x":-3.5,"y":-12.5}],"spawn_point":{"x":10.5,"y":-0.5}}');*/
+var cursor = {x: 0, y: 0};
+var edit = false;
+var add_tower_mode = false;
+var add_tower_num = 0;
+
+var towers = [];
+var enems = [];
+var bullets = [];
+var spawn = new spawner();
+spawn.init();
+
+var money = 1000;
+var health = 100;
+
+update_stats();
+
+init_tower_templamate();
+init_enem_templemate();
+
+draw();
+debug();
+
+var time = 0;
+
+setInterval(function(){
+c.clearRect(0, 0, canvas.width, canvas.height);
+
+	update();
+	draw();
+
+	if(edit){
+		
+		c.beginPath();
+		c.rect(ti(cursor.x - 0.5).x, ti(cursor.y + 0.5).y, square, square);
+		c.fillStyle = 'lime';
+		c.fill();
+	}
+
+	time++;
+}, 1000/ 32);
+
+function Map(){
+	this.path = [];
+	this.path_point = [];
+	this.spawn_point = {x: 0, y: 0};
+}
+
+function spawner(){
+	this.waves = [];
+	this.wave = null;
+	
+	this.wavedelay = 10;
+	this.wavedelaytime = 0;
+	this.waveend = false;
+	
+	
+	this.delay = 50;
+	this.delaytime = 0;
+	this.spawned = false;
+	
+	this.spawnPoint = map.spawn_point;
+	
+	this.init = function(){
+		var w1 = {type: 3, amount: 1000, delay: 35};
+		var w2 = {type: 1, amount: 10, delay: 50};
+		var w3 = {type: 2, amount: 100, delay: 50};
+		this.waves.push(w1);
+		//this.waves.push(w2);
+		//this.waves.push(w3);
+	}
+	
+	this.spawn = function(type){
+		var t = copyObject(enem_templemate[this.wave.type]);
+		t.v.x = this.spawnPoint.x;
+		t.v.y = this.spawnPoint.y;
+		enems.push(t);
+		this.wave.amount--;
+	}
+	
+	this.update = function(){
+		if(!this.waveend){
+			if(this.wave != null){
+				if(!this.spawned){
+					if(this.wave.amount > 0){
+						this.spawn(this.wave.type);
+						this.spawned = true;
+					}else{
+						this.wave = null;
+					}
+				}else{
+					if(this.delaytime >= this.wave.delay){
+						this.spawned = false;
+						this.delaytime = 0;
+					}
+					this.delaytime++;
+				}
+			}else{
+				if(this.waves.length > 0){
+					this.wave = this.waves.shift();
+					this.waveend = true;
+				}
+			}
+		}else{
+			if(this.wavedelaytime >= this.wavedelay)
+			{
+				this.waveend = false;
+				this.wavedelaytime = 0;
+			}
+			this.wavedelaytime++;
+		}
+	}
+}
+		//{name: ,value: },
+function tower(){
+	this.type = 1;
+	this.color = 'green';
+	this.upgrade_state = -1;
+	
+	this.value = cost_table[0];
+	
+	this.v = {x: -5.5, y: 5.5};
+	this.firedir = {x: 0, y: 1};
+	
+	this.range = 3;
+	
+	this.delaytime = 0;
+	this.delay = 15;
+	this.shooted = false;
+	
+	this.speed = 0.3; // delete later
+	
+	this.bullet = new bullet();
+	
+	this.stats = [
+		{name: "Siła", value: "towers[selected_tower].bullet.power"},
+		{name: "Prędkość pocisku", value: "towers[selected_tower].bullet.speed"},
+		{name: "Zasięg", value: "towers[selected_tower].range"},
+		{name: "Firerate", value: "(1000/32/towers[selected_tower].delay).toFixed(2)+'/s'"},
+		{name: "Poziom ulepszenia", value: "towers[selected_tower].upgrade_state+1"},
+		{name: "Wartość po sprzedaży", value: "towers[selected_tower].value * 0.8"},
+	];
+	
+	this.upgrade = function(){
+		if(this.upgrade_state < this.upgrades.length-1 && money >= this.upgrades[this.upgrade_state+1].cost){
+			var u_set = this.upgrades[this.upgrade_state+1];
+			var b_err = false;
+			for(var i in u_set.values){
+				if(eval(u_set.values[i].prop) != undefined){
+					eval(u_set.values[i].prop + "=" + u_set.values[i].val);
+				}else{
+					b_err = true;
+				}
+			}
+			if(!b_err){
+				this.upgrade_state++;
+				this.value += this.upgrades[this.upgrade_state].cost;	
+			}
+		}
+	}
+	
+	
+	this.upgrades = [
+		{values: [{prop: "this.bullet.speed", val: 0.4}], cost: 20},
+		{values: [{prop: "this.bullet.power", val: 2}], cost: 35},
+		{values: [{prop: "this.delay", val: 10},{prop: "this.range", val: 4}], cost: 50},
+		{values: [{prop: "this.delay", val: 0.7}], cost: 100}
+	];
+	
+	this.shoot = function(i, tw){
+		var t = copyObject(this.bullet);
+		t.speed = this.speed;
+		t.v.x = this.v.x;
+		t.v.y = this.v.y;
+		t.hi = i;
+		bullets.push(t);
+	}
+	
+	this.update = function(tw){
+		
+		if(!this.shooted){
+			for(var i in enems){
+				if(len(this.v, enems[i].v) < this.range){
+					this.shooted = true;
+					this.shoot(i, tw);
+					break;
+				}
+			}
+		}else{
+			this.delaytime++;
+			if(this.delaytime > this.delay){
+				this.delaytime = 0;
+				this.shooted = false;
+			}
+		}
+	}
+	
+	this.draw = function(){
+		c.beginPath();
+		c.arc(ti(this.v.x).x, ti(this.v.y).y, square/2 - 2, 0, 2*Math.PI, false);
+		c.fillStyle = this.color;
+		c.fill();
+	}
+}
+
+function bullet(){
+	this.type = 0;
+	this.typeOptions = null;
+	this.v = {x: 0, y: 0};
+	this.vel = {x: 0, y: 0};
+	this.speed = 0.3;
+	
+	this.dir = {x: 0, y: 0};
+	this.hi = -1;
+	
+	this.power = 1;
+	
+	this.life = 0;
+	this.maxlife = 120;
+	
+	this.update = function(){
+	if(this.hi != -1 && enems[this.hi] != undefined){
+		var follow = enems[this.hi].v; 
+		var dir = {x: follow.x - this.v.x, y: follow.y - this.v.y};
+		dir = normalize(dir);
+		dir.x *= this.speed;
+		dir.y *= this.speed;
+		
+		this.vel.x = dir.x;
+		this.vel.y = dir.y;
+		}
+		
+		this.v.x += this.vel.x;
+		this.v.y += this.vel.y;
+		this.life++;
+	}
+	
+	this.onhit = function(enem, j){
+		enems[enem].health -= this.power;
+	}
+	
+	this.draw = function(){
+		c.beginPath();
+		//c.arc(ti(this.v.x).x, ti(this.v.y).y, 4, 0, 2*Math.PI, false);
+		//c.fill();
+		c.fillStyle = 'red';
+		c.font = "14pt Impact Bold";
+		c.fillText(this.power, ti(this.v.x).x, ti(this.v.y).y);
+		c.fillStyle = 'black';
+	}
+}
+
+function enem(){
+	this.type = 0;
+	this.value = 5;
+
+	this.v = {x: 0, y: 0};
+	this.vel = {x: 0, y: 0};
+	this.speed = 0.1;
+	this.pathpoint = 0;
+	this.path = map.path;
+	
+	this.health = 10;
+	this.maxhealth = 10;
+	
+	this.frozen = false;
+	this.freezedelay = 25;
+	this.freezetime = 0;
+	
+	this.update = function(){
+		if(!this.frozen){
+			if(len(this.v, this.path[this.pathpoint]) < (this.speed*0.7) && this.pathpoint + 1 < this.path.length)
+				this.pathpoint++;
+			
+			var point = this.path[this.pathpoint];
+			var dir = {x: point.x - this.v.x, y: point.y - this.v.y };
+			dir = normalize(dir);
+			this.vel.x = dir.x * this.speed;
+			this.vel.y = dir.y * this.speed;
+			
+			this.v.x += this.vel.x;
+			this.v.y += this.vel.y;
+		}else{
+			if(this.freezetime >= this.freezedelay){
+				this.freezetime = 0;
+				this.frozen = false;
+			}
+			this.freezetime++;
+		}
+	}
+	
+	this.draw = function(){
+		switch(this.type){
+		case 1:
+			var data = [
+				{x: -0.5, y: 0},
+				{x: 0, y: 0.5},
+				{x: 0.5, y: 0},
+				{x: 0, y: -0.5}
+			];
+			
+			for(var i in data){
+				data[i].x *= 0.8;
+				data[i].y *= 0.8;
+			}
+			
+			for(var i in data){
+				data[i].x += this.v.x;
+				data[i].y += this.v.y;
+			}
+			c.beginPath();
+			c.moveTo(ti(data[0].x).x, ti(data[0].y).y);
+			for(var i = 1; i < data.length; i++){
+				c.lineTo(ti(data[i].x).x, ti(data[i].y).y);
+			}
+			c.lineTo(ti(data[0].x).x, ti(data[0].y).y);
+			c.fillStyle = 'orange';
+			if(this.frozen) c.fillStyle = 'cyan';			
+			c.fill();
+		break;
+		
+		case 2:
+			var data = [
+				{x: -0.5, y: 0},
+				{x: 0, y: 0.5},
+				{x: 0.5, y: 0},
+				{x: 0, y: -0.5}
+			];
+			
+			for(var i in data){
+				data[i].x *= 0.8;
+				data[i].y *= 0.8;
+			}
+			
+			for(var i in data){
+				data[i].x += this.v.x;
+				data[i].y += this.v.y;
+			}
+			c.beginPath();
+			c.moveTo(ti(data[0].x).x, ti(data[0].y).y);
+			for(var i = 1; i < data.length; i++){
+				c.lineTo(ti(data[i].x).x, ti(data[i].y).y);
+			}
+			c.lineTo(ti(data[0].x).x, ti(data[0].y).y);
+			c.fillStyle = 'blue';
+			if(this.frozen) c.fillStyle = 'cyan';	
+			c.fill();
+		break;
+		
+		default:
+			
+			c.beginPath();
+			c.rect(ti(this.v.x).x - square / 4, ti(this.v.y).y - square / 4, square / 2, square / 2);
+			c.fillStyle = 'purple';
+			if(this.frozen) c.fillStyle = 'cyan';	
+			c.fill();
+			c.fillStyle = 'black';
+			
+			break;
+			
+		}
+		
+		var heal = this.health / this.maxhealth;
+		
+		c.beginPath();
+		c.rect(ti(this.v.x - 0.5).x, ti(this.v.y + 0.5).y, heal*square, 6);
+		c.fillStyle = 'lime';
+		c.fill();
+	}
+}
+canvas.addEventListener('mousemove', function(e){
+
+var mpos = getMous(e);
+var ms = {x: Math.floor((mpos.x - canvas.width/2) / square)+0.5, y: Math.floor((-mpos.y + canvas.height / 2) / square) + 0.5};
+cursor.x = ms.x;
+cursor.y = ms.y;
+});
+
+
+var bounds = {left: to(0).x, right: to(canvas.width).x, top: to(0).y, bottom: to(canvas.height).y};
+
+function debug(){
+		c.beginPath();
+		c.moveTo(ti(map.path[0].x).x, ti(map.path[0].y).y);
+	for(var i in map.path){
+		c.lineTo(ti(map.path[i].x).x, ti(map.path[i].y).y);
+	}
+	c.stroke();
+}
+
+
+var hitrange = 0.5;
+
+function update(){
+	
+	spawn.update();
+
+	for(var i in towers)
+		towers[i].update(i);
+
+	for(var i in enems){
+		enems[i].update();
+		
+		if(len(enems[i].v, map.path[map.path.length-1]) < (enems[i].speed*0.7) && enems[i].pathpoint == map.path.length - 1){
+			health -= enems[i].health;
+			for(var k in bullets)
+			{
+				if(bullets[k].hi == i) bullets[k].hi = -1;
+			}
+			enems.splice(i, 1);
+			update_stats();
+		}else{
+		
+		for(var j in bullets){
+			if(enems.length > 0 && len(enems[i].v, bullets[j].v) < hitrange){
+			bullets[j].onhit(i, j);
+				if(enems[i].health <= 0){
+					for(var k in bullets)
+					{
+						if(bullets[k].hi == i) bullets[k].hi = -1;
+					}
+					money += enems[i].value;
+					update_stats();
+					enems.splice(i, 1);
+				}
+				bullets.splice(j, 1);
+			}
+		}
+		}
+	}
+	
+	for(var i in bullets){
+		bullets[i].update();
+		if(bullets[i].v.x > bounds.right || bullets[i].v.x < bounds.left ||
+		bullets[i].v.y > bounds.top || bullets[i].v.y < bounds.bottom || 
+		Math.abs(bullets[i].vel.x + bullets[i].vel.y) < 0.01 ||
+		bullets[i].life > bullets[i].maxlife)
+			bullets.splice(i, 1);
+	}
+	
+	if(health < 0) health = 0;
+	
+}
+
+function draw(){
+	c.beginPath();
+		c.moveTo(ti(map.path[0].x).x, ti(map.path[0].y).y);
+	for(var i in map.path){
+		c.lineTo(ti(map.path[i].x).x, ti(map.path[i].y).y);
+	}
+	c.lineWidth = square;
+	c.strokeStyle = 'rgb(220, 220, 78)';
+	c.stroke();
+	c.strokeStyle = 'black';
+	c.lineWidth = 1;
+	
+	for(var i in enems)
+		enems[i].draw();
+	
+	for(var i in bullets)
+		bullets[i].draw();
+		
+	if(selected_tower != -1){
+		var a_t = towers[selected_tower];
+		c.beginPath();
+		c.arc(ti(a_t.v.x).x, ti(a_t.v.y).y, a_t.range*square, 0, 2*Math.PI, false);
+		c.fillStyle = 'rgba(123,123,123,0.1)';
+		//c.fillStyle = 'red';
+		c.fill();
+	}
+		
+	for(var i in towers)
+		towers[i].draw();
+}
+
+
+
+function rotatePoint(p, a){
+	var rad = (Math.PI*a)/180;
+	var sin = Math.sin(rad),
+		cos = Math.cos(rad);
+		
+	var x = p.x*cos - p.y*sin;
+	var y = p.y*cos + p.x*sin;
+	
+	return {x: x, y: y};
+}
+
+function getMous(e){
+	var bound = canvas.getBoundingClientRect();
+	var x = e.clientX - bound.left;
+	var y = e.clientY - bound.top;
+	return {x: x, y: y};
+}
+
+function len(v1, v2){
+	return Math.sqrt(Math.pow(v2.x - v1.x, 2) + Math.pow(v2.y - v1.y, 2));
+}
+
+function normalize(v){
+	var len = Math.sqrt(v.x*v.x + v.y*v.y);
+	return {x: v.x / len,y: v.y / len};
+}
+
+function ti(v){
+	return {x: v * square + canvas.width / 2, y: -v * square + canvas.height / 2};
+}
+
+function to(v){
+	return {x: (v - canvas.width/2) / square, y: (-v + canvas.height / 2) / square};
+}
+
+function copyObject(obj) {
+		var copy;
+
+		if (null == obj || "object" != typeof obj) return obj;
+
+		if (obj instanceof Array) {
+			copy = [];
+			for (var i = 0; i < obj.length; i++) {
+				copy[i] = copyObject(obj[i]);
+			}
+			return copy;
+		}
+
+		if (obj instanceof Object) {
+			copy = {};
+			for (var i in obj) {
+				if (obj.hasOwnProperty(i)) copy[i] = copyObject(obj[i]);
+			}
+			return copy;
+		}
+
+		throw new Error("Unable to copy obj! Its type isn't supported.");
+	}
+</script>
