@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<style>
+		canvas {
+			border: 1px solid #d3d3d3;
+			background-color: #f1f1f1;
+			margin: 0 auto;
+			display: block;
+		}
+		.buttons{
+			width: 100px;
+			display: block;
+			margin:0 auto;
+			margin-top: 10px;
+		}
+	</style>
+</head>
+
+<body onload="startGame()">
+	<script>
+
+		var keys = [];
+
+		var myGamePiece;
+		var ball;
+		var myObstacles = [];
+		var walls = [];
+
+		var blocks = [];
+
+		var myScore;
+		var canvas_width = 600;
+		var canvas_height = 250;
+		// var canvas_width = 200;
+		// var canvas_height = 100;
+
+		function stopGame(){
+			myGameArea.stop();
+		}
+
+		function startGame() {
+			// myGamePiece = new component(50, 15, "red", 10, 120);
+			let piece_w = 50, piece_h = 15;
+			myGamePiece = new component(piece_w, piece_h, "red", (canvas_width - piece_w) / 2, canvas_height - piece_h - 10);
+
+			ball = new component(10, 10, 'blue', myGamePiece.x + piece_w / 2, myGamePiece.y - 5 - 15, 'ball');
+			ball.speedX = 1;
+			ball.speedY = -1;
+
+			myGamePiece.gravity = 0.05;
+			myScore = new component("30px", "Consolas", "black", 280, 40, "text");
+
+
+			const block_w = 25;
+			const block_h = 15;
+			const block_space = 5;
+			const blocks_start = 40;
+
+			var columns = Math.floor((canvas_width - blocks_start * 2) / (block_w + block_space));
+			var rows = 5;
+
+			for (var y = 0; y < rows; y++) {
+				for (var x = 0; x < columns; x++) {
+					var comp = new component(block_w, block_h, `hsl(${(y / rows) * 80}, 100%, 50%)`, x * (block_w + block_space) + blocks_start, y * (block_h + block_space) + blocks_start);
+					blocks.push(comp);
+				}
+			}
+
+			let wallsize = 50;
+			walls = [
+				new component(wallsize, canvas_height, 'black', -wallsize + 5, 0),
+				new component(wallsize, canvas_height, 'black', canvas_width - 5, 0),
+				new component(canvas_width, wallsize, 'black', 0, -wallsize + 5)
+			]
+
+			myGameArea.start();
+		}
+
+		var myGameArea = {
+			canvas: document.createElement("canvas"),
+
+			start: function () {
+				this.canvas.width = canvas_width;
+				this.canvas.height = canvas_height;
+				this.context = this.canvas.getContext("2d");
+				document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+				this.frameNo = 0;
+				if(this.interval){
+					clearInterval(myGameArea.interval);
+				}
+				this.interval = setInterval(updateGameArea, 20);
+				// updateGameArea();
+			},
+			clear: function () {
+				this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+			},
+			stop: function(){
+				if(this.interval){
+					clearInterval(myGameArea.interval);
+				}
+			}
+		}
+
+		function circleRect(cx, cy, radius, rx, ry, rw, rh) {
+
+			// temporary variables to set edges for testing
+			var testX = cx;
+			var testY = cy;
+
+			// which edge is closest?
+			if (cx < rx) testX = rx;      // test left edge
+			else if (cx > rx + rw) testX = rx + rw;   // right edge
+			if (cy < ry) testY = ry;      // top edge
+			else if (cy > (ry + rh)) testY = ry + rh;   // bottom edge
+			// get distance from closest edges
+			var distX = cx - testX;
+			var distY = cy - testY;
+			var distance = Math.sqrt((distX * distX) + (distY * distY));
+			// var distance = Math.sqrt((distY * distY));
+
+			// if the distance is less than the radius, collision!
+			if (distance <= radius) {
+				// console.log(cy, testY, distance, radius, Math.abs(distX) < Math.abs(distY));
+				return [Math.abs(distX) < Math.abs(distY) ? 1 : 2, cx < rx, cy < ry];
+				// return true;
+			}
+
+			return [0];
+		}
+
+		function component(width, height, color, x, y, type) {
+			this.type = type;
+			this.score = 0;
+			this.width = width;
+			this.height = height;
+			this.speedX = 0;
+			this.speedY = 0;
+			this.x = x;
+			this.y = y;
+			this.gravity = 0;
+			this.gravitySpeed = 0;
+			this.update = function () {
+				ctx = myGameArea.context;
+				if (this.type == "text") {
+					ctx.font = this.width + " " + this.height;
+					ctx.fillStyle = color;
+					ctx.fillText(this.text, this.x, this.y);
+				} else if (this.type == 'ball') {
+					ctx.beginPath();
+					ctx.fillStyle = color;
+					ctx.arc(this.x, this.y, this.width, 0, 2 * Math.PI);
+					ctx.fill();
+				} else {
+					ctx.fillStyle = color;
+					ctx.fillRect(this.x, this.y, this.width, this.height);
+				}
+			}
+			this.newPos = function () {
+				this.gravitySpeed += this.gravity;
+				this.x += this.speedX;
+				this.y += this.speedY + this.gravitySpeed;
+				this.hitBottom();
+			}
+			this.hitBottom = function () {
+				// var rockbottom = myGameArea.canvas.height - this.height;
+				// if (this.y > rockbottom) {
+				//     this.y = rockbottom;
+				//     this.gravitySpeed = 0;
+				// }
+			}
+
+			this.crashWith = function (otherobj) {
+				var myleft = this.x;
+				var myright = this.x + (this.width);
+				var mytop = this.y;
+				var mybottom = this.y + (this.height);
+				var otherleft = otherobj.x;
+				var otherright = otherobj.x + (otherobj.width);
+				var othertop = otherobj.y;
+				var otherbottom = otherobj.y + (otherobj.height);
+				var crash = true;
+				// if ((mybottom < othertop) || (mytop > otherbottom) || (myright < otherleft) || (myleft > otherright)) {
+				//     crash = false;
+				// }
+
+				var in_x = myleft > otherleft && myright < otherright;
+				// var in_y
+
+				return ((mybottom > othertop) && in_x) + ((mytop < otherbottom) && in_x) * 2;// + (myright > otherleft) * 4 + (myleft < otherright) * 8;
+
+				// return crash;
+			}
+
+			this.crashBall = function (otherobj) {
+				var myleft = this.x - this.width;
+				var myright = this.x + (this.width);
+				var mytop = this.y - this.width;
+				var mybottom = this.y + (this.width);
+				var otherleft = otherobj.x;
+				var otherright = otherobj.x + (otherobj.width);
+				var othertop = otherobj.y;
+				var otherbottom = otherobj.y + (otherobj.height);
+
+				var in_x = myleft > otherleft && myright < otherright;
+				var in_y = mytop > othertop && mybottom < otherbottom;
+
+				// var collision = ((mybottom > othertop) && in_x && this.y < otherobj.y) + ((mytop < otherbottom) && in_x && this.y > otherobj.y) * 2 +
+				// 	((myleft < otherright) && in_y && this.x > otherobj.x) * 4 + ((myright > otherleft) && in_y && this.x < otherobj.x) * 8;
+
+				var collision = circleRect(this.x, this.y, this.width, otherobj.x, otherobj.y, otherobj.width, otherobj.height);
+
+				// if(circled == 1){
+				// 	ball.speedX = -ball.speedX;
+				// }
+				// if(circled == 2){
+				// 	ball.speedY = -ball.speedY;
+				// }
+
+
+				if (collision[0] == 1) {
+					// console.log(collision);
+					if (collision[2]) {
+						ball.speedY = -1;
+						console.log('A!');
+					} else {
+						ball.speedY = 1;
+						console.log('a');	
+					}
+				}
+
+				if (collision[0] == 2) {
+					if (collision[1]) {
+						ball.speedX = -1;
+					} else {
+						ball.speedX = 1;
+					}
+				}
+				return collision;
+			}
+		}
+
+		var aaa = 0;
+
+		function updateGameArea() {
+			// var x, height, gap, minHeight, maxHeight, minGap, maxGap;
+			handleKeys();
+			var i = 0;
+			// for (var t of [myGamePiece].concat(walls)) {
+			for (var t of walls) {
+
+				var collision = ball.crashBall(t);
+				// if(collision[0] != 0){
+				// 	console.log(t, collision);
+				// 	alert();
+				// }
+				i++;
+				// console.log(collision);
+
+				// console.log(collision);
+			}
+
+			ball.crashBall(myGamePiece);
+
+			for (var i = 0; i < blocks.length; i++) {
+				var collision = ball.crashBall(blocks[i]);
+				if (collision != 0) {
+					blocks.splice(i, 1);
+				}
+			}
+
+			myGameArea.clear();
+
+			for (let w of walls) {
+				w.update();
+			}
+
+
+			for (let block of blocks) {
+				block.update();
+			}
+
+			ball.newPos();
+			ball.update();
+
+			myGamePiece.update();
+
+			if (ball.y > canvas_height) {
+				clearInterval(myGameArea.interval);
+				ctx.font = '30pt Arial';
+				ctx.fillText(`KONIEC GRY`, (canvas_width - 300) / 2, canvas_height / 2);
+			}
+		}
+
+
+
+		function handleKeys() {
+			//d - 68
+			//> - 39
+
+			//a - 65
+			//< - 37
+			const speed = 5;
+			if (keys[68] || keys[39]) { // prawo
+				myGamePiece.x += speed;
+			}
+
+			if (keys[65] || keys[37]) { // lewo
+				myGamePiece.x -= speed;
+			}
+		}
+
+		document.body.addEventListener('keyup', keyUp);
+		document.body.addEventListener('keydown', keyDown);
+
+		function keyUp(e) {
+			keys[e.keyCode] = false;
+		}
+
+		function keyDown(e) {
+			keys[e.keyCode] = true;
+		}
+
+
+	</script>
+	<div class="buttons">
+		<button onclick="startGame()">start</button>
+		<button onclick="stopGame()">stop</button>
+	</div>
+</body>
+
+</html>
