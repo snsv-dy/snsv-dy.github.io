@@ -1,0 +1,52 @@
+<html>
+	<head>
+		<meta charset="utf-8">
+		<style type="text/css">
+			form > * {
+				margin: 5px;
+			}
+		</style>
+		<script>
+			function work1() {
+				var worker1 = new Worker('pesel_ip.js');
+				worker1.onmessage = function(e) {
+					document.getElementById("worker1_result").textContent = e.data;
+				}
+
+				var pesel = document.forms[0].pesel.value;
+				var ip = document.forms[0].ip.value;
+				worker1.postMessage([pesel, ip]);
+			}
+
+			function work2() {
+				var worker2 = new Worker('switch_letters.js');
+				worker2.onmessage = function(e) {
+					document.forms[0].imie.value = e.data[0];
+					document.forms[0].nazwisko.value = e.data[1];
+				}
+				worker2.postMessage([document.forms[0].imie.value, document.forms[0].nazwisko.value]);
+			}
+		</script>
+	</head>
+	<body>
+		<form onsubmit="return false;">
+			<label for="imie">Imię: </label>
+			<input type="text" name="imie" />
+			<br>
+			<label for="nazwisko">Nazwisko: </label>
+			<input type="text" name="nazwisko" />
+			<br>
+			<label for="pesel">Pesel: </label>
+			<input type="text" name="pesel" />
+			<br>
+			<label for="ip">Ip: </label>
+			<input type="text" name="ip" />
+			<br>
+			<button onclick="work1()">Zweryfikuj pesel i ip</button>
+			<br>
+			<button onclick="work2()">Worker 2</button>
+		</form>
+		<div id="worker1_result"></div>
+		<div id="worker2_result"></div>
+	</body>
+</html>
