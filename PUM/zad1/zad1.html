@@ -7,15 +7,30 @@
 		<canvas width="800" height="600" style="border: 1px solid red;"></canvas>
 		<script>
 			var canvas = document.querySelector('canvas');
+			var c = canvas.getContext('2d');
 
 			var cw = canvas.width;
 			var ch = canvas.height;
 			var r = 50;
+			var color = 0;
+			
+			function frame() {
+				if (color == 0) {
+					c.fillStyle = 'blue';
+					color = 1;
+				} else {
+					c.fillStyle = 'green';
+					color = 0;
+				}
 
-			var c = canvas.getContext('2d');
-			c.beginPath();
-			c.arc((cw) / 2 - r, (ch) / 2 - r, r, 0, 2*Math.PI, false);
-			c.fill();
+				c.clearRect(0, 0, cw, ch);
+				c.beginPath();
+				c.arc((cw) / 2, (ch) / 2, r, 0, 2*Math.PI, false);
+				c.fill();
+			}
+
+			setInterval(frame, 1000);
+			frame();
 		</script>
 	</body>
 </html>
