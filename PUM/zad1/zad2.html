@@ -14,12 +14,15 @@
 			var r = 50;
 			var color = 0;
 			
-			function frame() {
+			var starttime = null;
+
+			function frame(timestamp) {
+				if (!starttime) starttime = timestamp;
 				if (color == 0) {
-					c.fillStyle = 'blue';
+					c.fillStyle = `hsl(${90}, 50%, 50%)`;
 					color = 1;
 				} else {
-					c.fillStyle = 'green';
+					c.fillStyle = `hsl(${120}, 50%, 50%)`;
 					color = 0;
 				}
 
@@ -27,10 +30,11 @@
 				c.beginPath();
 				c.arc((cw) / 2, (ch) / 2, r, 0, 2*Math.PI, false);
 				c.fill();
+
+				window.requestAnimationFrame(frame);
 			}
 
-			frame();
-			setInterval(frame, 1000);
+			window.requestAnimationFrame(frame);
 		</script>
 	</body>
 </html>
