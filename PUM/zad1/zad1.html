@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+	</head>
+	<body>
+		<canvas width="800" height="600" style="border: 1px solid red;"></canvas>
+		<script>
+			var canvas = document.querySelector('canvas');
+
+			var cw = canvas.width;
+			var ch = canvas.height;
+			var r = 50;
+
+			var c = canvas.getContext('2d');
+			c.beginPath();
+			c.arc((cw) / 2 - r, (ch) / 2 - r, r, 0, 2*Math.PI, false);
+			c.fill();
+		</script>
+	</body>
+</html>
