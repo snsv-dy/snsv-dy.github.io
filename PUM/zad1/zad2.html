@@ -12,24 +12,31 @@
 			var cw = canvas.width;
 			var ch = canvas.height;
 			var r = 50;
+
+			var startc = 0;
+			var endc = 120;
 			var color = 0;
 			
 			var starttime = null;
+			
+			c.font = "20px Calibri";
 
 			function frame(timestamp) {
 				if (!starttime) starttime = timestamp;
-				if (color == 0) {
-					c.fillStyle = `hsl(${90}, 50%, 50%)`;
-					color = 1;
-				} else {
-					c.fillStyle = `hsl(${120}, 50%, 50%)`;
-					color = 0;
-				}
+				
+				color = Math.floor(timestamp - starttime) % 1000 / 1000 * 360;
+
+				c.fillStyle = `hsl(${color}, 50%, 50%)`;
+				// color = 1;
 
 				c.clearRect(0, 0, cw, ch);
 				c.beginPath();
 				c.arc((cw) / 2, (ch) / 2, r, 0, 2*Math.PI, false);
 				c.fill();
+
+				c.beginPath();
+				c.fillStyle = "black";
+				c.fillText(color.toString(), 10, 20);
 
 				window.requestAnimationFrame(frame);
 			}
