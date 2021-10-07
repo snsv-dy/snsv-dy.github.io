@@ -13,8 +13,8 @@
 			var ch = canvas.height;
 			var r = 50;
 
-			var startc = 0;
-			var endc = 120;
+			var startc = 120;
+			var endc = 240;
 			var color = 0;
 			
 			var starttime = null;
@@ -24,9 +24,12 @@
 			function frame(timestamp) {
 				if (!starttime) starttime = timestamp;
 				
-				color = Math.floor(timestamp - starttime) % 1000 / 1000 * 360;
+				color = Math.floor(timestamp - starttime) / 1000 * Math.PI;
+				color = (Math.cos(color) + 1) / 2;// * (endc - startc) + startc;
 
-				c.fillStyle = `hsl(${color}, 50%, 50%)`;
+				// c.fillStyle = `hsl(${color}, 50%, 50%)`;
+				var rgb = interpolateRGB(new RGB(0, 255, 0), new RGB(0, 0, 255), color, 1);
+				c.fillStyle = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
 				// color = 1;
 
 				c.clearRect(0, 0, cw, ch);
@@ -40,6 +43,23 @@
 
 				window.requestAnimationFrame(frame);
 			}
+
+			function interpolateRGB(startRGB, endRGB, a, e) {
+				var rgb = {
+					r: Math.round((endRGB.r - startRGB.r) * a / e + startRGB.r),
+					g: Math.round((endRGB.g - startRGB.g) * a / e + startRGB.g),
+					b: Math.round((endRGB.b - startRGB.b) * a / e + startRGB.b)
+				}
+				
+				return new RGB(rgb.r, rgb.g, rgb.b)
+			}
+
+			function RGB(r, g, b) {
+				this.r = r || 0;
+				this.g = g || 0;
+				this.b = b || 0;
+			}
+
 
 			window.requestAnimationFrame(frame);
 		</script>
