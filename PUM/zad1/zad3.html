@@ -12,10 +12,14 @@
 			var cw = canvas.width;
 			var ch = canvas.height;
 			var r = 50;
+			var groundh = 20;
+			var groundw = 200;
 
 			var startc = 120;
 			var endc = 240;
 			var color = 0;
+
+			var bally = ch / 2;
 			
 			var starttime = null;	
 
@@ -25,15 +29,23 @@
 				color = Math.floor(timestamp - starttime) / 1000 * Math.PI;
 				color = (Math.sin(color) + 1) / 2;// * (endc - startc) + startc;
 
+				bally = color * (ch / 2) - (r + groundh) + ch / 2;
+
 				// c.fillStyle = `hsl(${color}, 50%, 50%)`;
 				// var rgb = interpolateRGB(new RGB(0, 255, 0), new RGB(0, 0, 255), color, 1);
 				var rgb = interpolateRGB( new RGB(0, 0, 255),new RGB(0, 255, 0), color, 1);
-				c.fillStyle = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
 				// color = 1;
 
 				c.clearRect(0, 0, cw, ch);
+
 				c.beginPath();
-				c.arc((cw) / 2, (ch) / 2, r, 0, 2*Math.PI, false);
+				c.rect((cw - groundw) / 2, (ch - groundh), groundw, groundh);
+				c.fillStyle = 'black';
+				c.fill();
+
+				c.beginPath();
+				c.fillStyle = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+				c.arc((cw) / 2, bally, r, 0, 2*Math.PI, false);
 				c.fill();
 
 				window.requestAnimationFrame(frame);
