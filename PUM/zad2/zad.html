@@ -15,24 +15,16 @@
 			var centery = ch / 2;
 			
 			const stepsMax = 5;
-			const stepSize = 70;
+			const stepSize = 45;
 			const stepBegx = (cw - stepsMax * stepSize) / 2;
 			const stepBegy = (ch - stepsMax * stepSize) / 2;
 
-			const gravity = -5;
+			const gravity = -170;
 			const ballr = 20;
 			var ballx = stepBegx + ballr;
 			var bally = stepBegy - ballr;
-			var bvelx = 2;
+			var bvelx = 90;
 			var bvely = 0;
-
-			var ballDest = [];
-
-			for (let i = 0; i < stepsMax; i++) {
-				var x = stepBegx + stepSize / 2 + stepSize * i;
-				var y = stepBegy - ballr + stepSize * i;
-				ballDest.push([x, y]);
-			}
 
 			var starttime = null;
 
@@ -65,43 +57,40 @@
 					stepsDrawn++;
 					setTimeout(window.requestAnimationFrame, 1000, frame);
 				} else {
+					if (!starttime) starttime = timestamp;
+
+					var frameInc = (timestamp - starttime) / 1000;
+
 					// Update ball position
 					// bvely += gravity;
 					// var newBallx = ballx + bvelx;
 					// var newBally = bally + bvely;
 
 					// Check for step collision
-					ballx += bvelx;
+					ballx += bvelx * frameInc;
 					var nextStepy = (stepy + 1) * stepSize + stepBegy;
 					var curStepx = stepx * stepSize + stepBegx;
 					if (ballx - ballr > curStepx + stepSize) {
 						if (bally + ballr < nextStepy) {
-							bally -= gravity;
+							bally -= gravity * frameInc;
 						} else {
-							stepy++;
+							bally = nextStepy - ballr;
 							stepx++;
+							if (ballx < stepBegx + stepSize * stepsMax) {
+								stepy++;
+							}
 						}
 					}
-					// var point = ballDest[nextPoint];
-					// var xDist = point[0] - ballx;
-
 					// Drawing ball
 					c.beginPath();
 					c.arc(ballx, bally, ballr, 0, 2 * Math.PI, 0);
 					c.strokeStyle = 'red';
 					c.stroke();
 
-					// Drawing ball points
-					c.strokeStyle = 'orange';
-					for (let i = 0; i < stepsMax; i++) {
-						c.beginPath();
-						c.arc(ballDest[i][0], ballDest[i][1], 5, 0, 2 * Math.PI, 0);
-						c.stroke();
-					}
-
 					// Slower refresh for debugging 
-					setTimeout(window.requestAnimationFrame, 100, frame);
-					// window.requestAnimationFrame(frame);
+					starttime = timestamp;
+					// setTimeout(window.requestAnimationFrame, 10, frame);
+					window.requestAnimationFrame(frame);
 				}
 			}
 
