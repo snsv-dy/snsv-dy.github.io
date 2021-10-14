@@ -15,9 +15,24 @@
 			var centery = ch / 2;
 			
 			const stepsMax = 5;
-			const stepSize = 50;
+			const stepSize = 70;
 			const stepBegx = (cw - stepsMax * stepSize) / 2;
 			const stepBegy = (ch - stepsMax * stepSize) / 2;
+
+			const gravity = -5;
+			const ballr = 20;
+			var ballx = stepBegx + ballr;
+			var bally = stepBegy - ballr;
+			var bvelx = 2;
+			var bvely = 0;
+
+			var ballDest = [];
+
+			for (let i = 0; i < stepsMax; i++) {
+				var x = stepBegx + stepSize / 2 + stepSize * i;
+				var y = stepBegy - ballr + stepSize * i;
+				ballDest.push([x, y]);
+			}
 
 			var starttime = null;
 
@@ -33,18 +48,58 @@
 			}
 
 			var stepsDrawn = 5;
+			var nextPoint = 0;
+
+			var stepy = 0;
+			var stepx = 0;
 
 			function frame(timestamp) {
 				c.clearRect(0, 0, cw, ch);
+				c.strokeStyle = 'black';
 				for (var i = 0; i < stepsDrawn; i++) {
 					drawStep(i);
 				}
+
 
 				if (stepsDrawn < stepsMax) {
 					stepsDrawn++;
 					setTimeout(window.requestAnimationFrame, 1000, frame);
 				} else {
-					// For debugging 
+					// Update ball position
+					// bvely += gravity;
+					// var newBallx = ballx + bvelx;
+					// var newBally = bally + bvely;
+
+					// Check for step collision
+					ballx += bvelx;
+					var nextStepy = (stepy + 1) * stepSize + stepBegy;
+					var curStepx = stepx * stepSize + stepBegx;
+					if (ballx - ballr > curStepx + stepSize) {
+						if (bally + ballr < nextStepy) {
+							bally -= gravity;
+						} else {
+							stepy++;
+							stepx++;
+						}
+					}
+					// var point = ballDest[nextPoint];
+					// var xDist = point[0] - ballx;
+
+					// Drawing ball
+					c.beginPath();
+					c.arc(ballx, bally, ballr, 0, 2 * Math.PI, 0);
+					c.strokeStyle = 'red';
+					c.stroke();
+
+					// Drawing ball points
+					c.strokeStyle = 'orange';
+					for (let i = 0; i < stepsMax; i++) {
+						c.beginPath();
+						c.arc(ballDest[i][0], ballDest[i][1], 5, 0, 2 * Math.PI, 0);
+						c.stroke();
+					}
+
+					// Slower refresh for debugging 
 					setTimeout(window.requestAnimationFrame, 100, frame);
 					// window.requestAnimationFrame(frame);
 				}
