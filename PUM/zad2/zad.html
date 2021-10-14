@@ -15,13 +15,13 @@
 			var centery = ch / 2;
 			
 			const stepsMax = 5;
-			const stepSize = 45;
+			const stepSize = 50;
 			const stepBegx = (cw - stepsMax * stepSize) / 2;
 			const stepBegy = (ch - stepsMax * stepSize) / 2;
 
 			const gravity = -170;
 			const ballr = 20;
-			var ballx = stepBegx + ballr;
+			var ballx = stepBegx + ballr - 100;
 			var bally = stepBegy - ballr;
 			var bvelx = 90;
 			var bvely = 0;
@@ -39,7 +39,7 @@
 				c.stroke();
 			}
 
-			var stepsDrawn = 5;
+			var stepsDrawn = 4;
 			var nextPoint = 0;
 
 			var stepy = 0;
@@ -48,10 +48,24 @@
 			function frame(timestamp) {
 				c.clearRect(0, 0, cw, ch);
 				c.strokeStyle = 'black';
+
+				if (stepsDrawn > 0) {
+					c.beginPath();
+					c.moveTo(0, stepBegy);
+					c.lineTo(stepBegx, stepBegy);
+					c.stroke();
+				}
+
+				if (stepsDrawn == stepsMax) {
+					c.beginPath();
+					c.moveTo(stepBegx + stepsMax * stepSize, stepBegy + stepsMax * stepSize);
+					c.lineTo(cw, stepBegy + stepsMax * stepSize);
+					c.stroke();
+				}
+
 				for (var i = 0; i < stepsDrawn; i++) {
 					drawStep(i);
 				}
-
 
 				if (stepsDrawn < stepsMax) {
 					stepsDrawn++;
@@ -62,11 +76,6 @@
 					var frameInc = (timestamp - starttime) / 1000;
 
 					// Update ball position
-					// bvely += gravity;
-					// var newBallx = ballx + bvelx;
-					// var newBally = bally + bvely;
-
-					// Check for step collision
 					ballx += bvelx * frameInc;
 					var nextStepy = (stepy + 1) * stepSize + stepBegy;
 					var curStepx = stepx * stepSize + stepBegx;
@@ -76,7 +85,7 @@
 						} else {
 							bally = nextStepy - ballr;
 							stepx++;
-							if (ballx < stepBegx + stepSize * stepsMax) {
+							if (ballx - ballr < stepBegx + stepSize * stepsMax) {
 								stepy++;
 							}
 						}
