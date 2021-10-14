@@ -11,20 +11,43 @@
 
 			var cw = canvas.width;
 			var ch = canvas.height;
+			var centerx = cw / 2;
+			var centery = ch / 2;
 			
-			var starttime = null;	
+			const stepsMax = 5;
+			const stepSize = 50;
+			const stepBegx = (cw - stepsMax * stepSize) / 2;
+			const stepBegy = (ch - stepsMax * stepSize) / 2;
 
-			// function drawStep(n) {
-			// 	var basex = n * stepSize;
+			var starttime = null;
 
-			// 	c.beginPath();
-			// 	c.moveTo()
-			// }
+			function drawStep(n) {
+				var basex = n * stepSize + stepBegx;
+				var basey = n * stepSize + stepBegy;
+
+				c.beginPath();
+				c.moveTo(basex, basey);
+				c.lineTo(basex + stepSize, basey);
+				c.lineTo(basex + stepSize, basey + stepSize);
+				c.stroke();
+			}
+
+			var stepsDrawn = 5;
 
 			function frame(timestamp) {
-				
+				c.clearRect(0, 0, cw, ch);
+				for (var i = 0; i < stepsDrawn; i++) {
+					drawStep(i);
+				}
 
-				setTimeout(window.requestAnimationFrame(frame), 1000);
+				if (stepsDrawn < stepsMax) {
+					stepsDrawn++;
+					setTimeout(window.requestAnimationFrame, 1000, frame);
+				} else {
+					// For debugging 
+					setTimeout(window.requestAnimationFrame, 100, frame);
+					// window.requestAnimationFrame(frame);
+				}
 			}
 
 			window.requestAnimationFrame(frame);
