@@ -25,11 +25,14 @@
 			var recth = 40;			
 			var rectx = (cw - rectw ) / 2;
 			var recty = ch - recth;
+			var shootDelay = 0.1;
+			var shootDelayCount = -1;
 
-			var bulletx = -1;
-			var bullety = -1;
+			// var bulletx = -1;
+			// var bullety = -1;
 			var bulletr = 5;
 			var bulletspeed = 450;
+			var bullets = [];
 
 			var targetR = 20;
 			var maxTargets = Math.floor((cw / (targetR * 2 + 10)));
@@ -63,6 +66,10 @@
 				var frameInc = (timestamp - starttime) / 1000;
 				starttime = timestamp;
 
+				if (shootDelayCount >= 0) {
+					shootDelayCount -= frameInc;
+				}
+
 				if (targets.length < maxTargets) {
 					if (targetSpawnCount < targetSpawnDelay) {
 						targetSpawnCount += frameInc;
@@ -88,14 +95,19 @@
 					c.fill();
 				}
 
-				if (bulletx != -1) {
+				var bulleti = 0;
+				for (let bullet of bullets) {
+					var bulletx = bullet[0];
+					var bullety = bullet[1];
+				// if (bulletx != -1) {
 					c.beginPath();
 					c.arc(bulletx, bullety, bulletr, 0, 2*Math.PI, false);
 					c.fillStyle = 'green';
 					c.fill();
 					if (bullety + bulletr < 0) {
-						bulletx = -1;
-						bullety = -1;
+						bullets.splice(bulleti, 1);
+						// bulletx = -1;
+						// bullety = -1;
 					}
 
 					// Checking collision
@@ -105,15 +117,17 @@
 							var x = target * (targetR * 2 + 10) + targetR;
 							if (bulletx + bulletr >= x - targetR && bulletx - bulletr <= x + targetR) {
 								targets.splice(i, 1);
-								bulletx = -1;
-								bullety = -1;
+								bullets.splice(bulleti, 1);
+								// bulletx = -1;
+								// bullety = -1;
 								break;
 							}
 							i++;
 						}
 					}
 
-					bullety -= bulletspeed * frameInc;
+					bullet[1] -= bulletspeed * frameInc;
+					bulleti++;
 				}
 
 				// if (color == 0) {
@@ -140,18 +154,20 @@
 				//a - 65
 				//< - 37
 				const speed = 500 * dt;
-				if ((keys[68] || keys[39])) { // prawo
+				if (rectx + rectw < cw && (keys[68] || keys[39])) { // prawo
 					rectx += speed;
 				}
 
-				if ((keys[65] || keys[37])) { // lewo
+				if (rectx > 0 && (keys[65] || keys[37])) { // lewo
 					rectx -= speed;
 				}
 				
-				if (keys[32] && bulletx == -1) {
+				if (keys[32] && shootDelayCount < 0) {
 					// Shoot
-					bulletx = rectx + rectw / 2;
-					bullety = recty - bulletr;
+					// bulletx = rectx + rectw / 2;
+					// bullety = recty - bulletr;
+					bullets.push([rectx + rectw / 2, recty - bulletr]);
+					shootDelayCount = shootDelay;
 				}
 			}
 
