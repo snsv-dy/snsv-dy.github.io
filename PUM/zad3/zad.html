@@ -28,8 +28,6 @@
 			var shootDelay = 0.2;
 			var shootDelayCount = -1;
 
-			// var bulletx = -1;
-			// var bullety = -1;
 			var bulletr = 5;
 			var bulletspeed = 450;
 			var bullets = [];
@@ -45,11 +43,11 @@
 			var score = 0;
 			
 			function spawnTarget() {
-				var x = 0;//Math.floor(Math.random() * (cw / (targetR * 2 + 10)));
+				var x = 0;
 				var found = false;
 				while (!found) {
 					found = true;
-					x = Math.floor(Math.random() * maxTargets);//(cw / (targetR * 2 + 10))) * (targetR * 2 + 10);
+					x = Math.floor(Math.random() * maxTargets);
 					for (let target of targets) {
 						if (target == x) {
 							found = false;
@@ -101,15 +99,13 @@
 				for (let bullet of bullets) {
 					var bulletx = bullet[0];
 					var bullety = bullet[1];
-				// if (bulletx != -1) {
+
 					c.beginPath();
 					c.arc(bulletx, bullety, bulletr, 0, 2*Math.PI, false);
 					c.fillStyle = 'green';
 					c.fill();
 					if (bullety + bulletr < 0) {
 						bullets.splice(bulleti, 1);
-						// bulletx = -1;
-						// bullety = -1;
 					}
 
 					// Checking collision
@@ -121,8 +117,6 @@
 								targets.splice(i, 1);
 								bullets.splice(bulleti, 1);
 								score++;
-								// bulletx = -1;
-								// bullety = -1;
 								break;
 							}
 							i++;
@@ -137,21 +131,7 @@
 				c.fillStyle = 'black';
 				c.font = '12pt Arial';
 				c.fillText("Liczba punktów: " + score, 0, ch - 10);
-				// c.fill();
-
-				// if (color == 0) {
-				// 	c.fillStyle = 'blue';
-				// 	color = 1;
-				// } else {
-				// 	c.fillStyle = 'green';
-				// 	color = 0;
-				// }
-
-				// c.clearRect(0, 0, cw, ch);
-				// c.beginPath();
-				// c.arc((cw) / 2, (ch) / 2, r, 0, 2*Math.PI, false);
-				// c.fill();
-				// setTimeout(requestAnimationFrame, 10, frame);
+				
 				requestAnimationFrame(frame);
 			}
 
@@ -174,8 +154,6 @@
 				
 				if (keys[32] && shootDelayCount < 0) {
 					// Shoot
-					// bulletx = rectx + rectw / 2;
-					// bullety = recty - bulletr;
 					bullets.push([rectx + rectw / 2, recty - bulletr]);
 					shootDelayCount = shootDelay;
 				}
