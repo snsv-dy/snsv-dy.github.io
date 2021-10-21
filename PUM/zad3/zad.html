@@ -26,9 +26,39 @@
 			var rectx = (cw - rectw ) / 2;
 			var recty = ch - recth;
 
+			var bulletx = -1;
+			var bullety = -1;
+			var bulletr = 5;
+			var bulletspeed = 450;
+
+			var targetR = 20;
+			var maxTargets = Math.floor((cw / (targetR * 2 + 10)));
+			var targets = [];
+			
 			var starttime = null;
 			
+			function spawnTarget() {
+				var x = 0;//Math.floor(Math.random() * (cw / (targetR * 2 + 10)));
+				var found = false;
+				while (!found) {
+					found = true;
+					x = Math.floor(Math.random() * maxTargets);//(cw / (targetR * 2 + 10))) * (targetR * 2 + 10);
+					for (let target of targets) {
+						if (target == x) {
+							found = false;
+							break;
+						}
+					}
+				}
+
+				targets.push(x);
+			}
+
 			function frame(timestamp) {
+				if (targets.length < maxTargets) {
+					spawnTarget();
+				}
+
 				if (!starttime) starttime = timestamp;
 
 				var frameInc = (timestamp - starttime) / 1000;
@@ -41,6 +71,30 @@
 				c.rect(rectx, recty, rectw, recth);
 				c.fillStyle = 'red';
 				c.fill();
+
+				for (let target of targets) {
+					var x = target * (targetR * 2 + 10) + targetR;
+					c.beginPath();
+					c.arc(x, targetR, targetR, 0, 2*Math.PI, false);
+					c.fillStyle = 'blue';
+					c.fill();
+				}
+
+				if (bulletx != -1) {
+					c.beginPath();
+					c.arc(bulletx, bullety, bulletr, 0, 2*Math.PI, false);
+					c.fillStyle = 'green';
+					c.fill();
+					if (bullety + bulletr < 0) {
+						bulletx = -1;
+						bullety = -1;
+					}
+
+					// Checking collision
+
+					bullety -= bulletspeed * frameInc;
+				}
+
 				// if (color == 0) {
 				// 	c.fillStyle = 'blue';
 				// 	color = 1;
@@ -71,6 +125,12 @@
 
 				if ((keys[65] || keys[37])) { // lewo
 					rectx -= speed;
+				}
+				
+				if (keys[32] && bulletx == -1) {
+					// Shoot
+					bulletx = rectx + rectw / 2;
+					bullety = recty - bulletr;
 				}
 			}
 
