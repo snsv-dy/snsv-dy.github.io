@@ -34,6 +34,8 @@
 			var targetR = 20;
 			var maxTargets = Math.floor((cw / (targetR * 2 + 10)));
 			var targets = [];
+			var targetSpawnDelay = 0.5;
+			var targetSpawnCount = 0;
 			
 			var starttime = null;
 			
@@ -55,15 +57,21 @@
 			}
 
 			function frame(timestamp) {
-				if (targets.length < maxTargets) {
-					spawnTarget();
-				}
-
+				
 				if (!starttime) starttime = timestamp;
 
 				var frameInc = (timestamp - starttime) / 1000;
 				starttime = timestamp;
-				
+
+				if (targets.length < maxTargets) {
+					if (targetSpawnCount < targetSpawnDelay) {
+						targetSpawnCount += frameInc;
+					} else {
+						spawnTarget();
+						targetSpawnCount = 0;
+					}
+				}
+
 				handleKeys(frameInc);
 				c.clearRect(0, 0, cw, ch);
 
@@ -91,6 +99,19 @@
 					}
 
 					// Checking collision
+					if (bullety + bulletr <= targetR * 2) {
+						var i = 0;
+						for (let target of targets) {
+							var x = target * (targetR * 2 + 10) + targetR;
+							if (bulletx + bulletr >= x - targetR && bulletx - bulletr <= x + targetR) {
+								targets.splice(i, 1);
+								bulletx = -1;
+								bullety = -1;
+								break;
+							}
+							i++;
+						}
+					}
 
 					bullety -= bulletspeed * frameInc;
 				}
@@ -107,7 +128,7 @@
 				// c.beginPath();
 				// c.arc((cw) / 2, (ch) / 2, r, 0, 2*Math.PI, false);
 				// c.fill();
-				setTimeout(requestAnimationFrame, 100, frame);
+				setTimeout(requestAnimationFrame, 10, frame);
 			}
 
 			frame();
