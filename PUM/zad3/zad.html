@@ -25,7 +25,7 @@
 			var recth = 40;			
 			var rectx = (cw - rectw ) / 2;
 			var recty = ch - recth;
-			var shootDelay = 0.1;
+			var shootDelay = 0.2;
 			var shootDelayCount = -1;
 
 			// var bulletx = -1;
@@ -41,6 +41,8 @@
 			var targetSpawnCount = 0;
 			
 			var starttime = null;
+
+			var score = 0;
 			
 			function spawnTarget() {
 				var x = 0;//Math.floor(Math.random() * (cw / (targetR * 2 + 10)));
@@ -118,6 +120,7 @@
 							if (bulletx + bulletr >= x - targetR && bulletx - bulletr <= x + targetR) {
 								targets.splice(i, 1);
 								bullets.splice(bulleti, 1);
+								score++;
 								// bulletx = -1;
 								// bullety = -1;
 								break;
@@ -129,6 +132,12 @@
 					bullet[1] -= bulletspeed * frameInc;
 					bulleti++;
 				}
+
+				c.beginPath();
+				c.fillStyle = 'black';
+				c.font = '12pt Arial';
+				c.fillText("Liczba punktów: " + score, 0, ch - 10);
+				// c.fill();
 
 				// if (color == 0) {
 				// 	c.fillStyle = 'blue';
@@ -142,7 +151,8 @@
 				// c.beginPath();
 				// c.arc((cw) / 2, (ch) / 2, r, 0, 2*Math.PI, false);
 				// c.fill();
-				setTimeout(requestAnimationFrame, 10, frame);
+				// setTimeout(requestAnimationFrame, 10, frame);
+				requestAnimationFrame(frame);
 			}
 
 			frame();
