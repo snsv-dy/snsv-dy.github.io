@@ -52,6 +52,22 @@ Sterowanie należy zrealizować za pomocą strzałek/kursorów.
 			];
 			var starttime = null;
 
+			var obstacles = [];
+			const obstacle_delay = 3;
+			var obstacle_counter = 0;
+
+			function createObstacle() {
+				console.log();
+				const owidth = car_w;
+				const oheight = car_h;
+				var x = cw / 2 + (Math.random() < 0.5 ? road_w / 4 : -road_w / 4);
+				var y = - oheight / 2;
+
+				obstacles.push([
+					x, y, owidth, oheight
+				]);
+			}
+
 			function frame(timestamp) {
 				
 				if (!starttime) {
@@ -60,6 +76,21 @@ Sterowanie należy zrealizować za pomocą strzałek/kursorów.
 
 				var frameInc = (timestamp - starttime) / 1000;
 				starttime = timestamp;
+
+				obstacle_counter += frameInc;
+				if (obstacle_counter >= obstacle_delay) {
+					createObstacle();
+					obstacle_counter = 0;
+				}
+
+				for (var i = 0; i < obstacles.length; i++) {
+					obstacles[i][1] += speed * frameInc;
+					if (obstacles[1] > ch) {
+						obstacles.splice(i, 1);
+						if (i < obstacles.length - 1)
+							i--;
+					}
+				}
 
 				handleKeys(frameInc);
 				// c.clearRect(0, 0, cw, ch);
@@ -117,6 +148,15 @@ Sterowanie należy zrealizować za pomocą strzałek/kursorów.
 				c.rect(carx - car_w / 2, cary - (car_h / 2), car_w, car_h);
 				c.fillStyle = 'lime';
 				c.fill();
+
+
+				// obstacles
+				for (let ob of obstacles) {
+					c.beginPath();
+					c.rect(ob[0] - ob[2] / 2, ob[1] - ob[3] / 2, ob[2], ob[3]);
+					c.fillStyle = 'blue';
+					c.fill();
+				}
 
 				// requestAnimationFrame(frame);
 				setTimeout(requestAnimationFrame, 100, frame);
