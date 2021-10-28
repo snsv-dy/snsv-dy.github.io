@@ -74,6 +74,14 @@ Sterowanie należy zrealizować za pomocą strzałek/kursorów.
 				}
 			}
 
+			function carIntersect(r2) {
+			return !(r2[0] - r2[2] / 2 > (carx + car_w / 2) || 
+					r2[0] + r2[2] / 2 < (carx - car_w / 2) || 
+					r2[1] - r2[3] / 2 > (cary + car_h / 2) ||
+					r2[1] + r2[3] / 2 < (cary - car_h / 2));
+			}
+
+
 			function frame(timestamp) {
 				
 				if (!starttime) {
@@ -95,6 +103,10 @@ Sterowanie należy zrealizować za pomocą strzałek/kursorów.
 						obstacles.splice(i, 1);
 						if (i < obstacles.length - 1)
 							i--;
+					} else {
+						if (carIntersect(obstacles[i])) {
+							cary += speed * frameInc;
+						}
 					}
 				}
 
@@ -164,8 +176,8 @@ Sterowanie należy zrealizować za pomocą strzałek/kursorów.
 					c.fill();
 				}
 
-				// requestAnimationFrame(frame);
-				setTimeout(requestAnimationFrame, 100, frame);
+				requestAnimationFrame(frame);
+				// setTimeout(requestAnimationFrame, 100, frame);
 			}
 
 			requestAnimationFrame(frame);
