@@ -62,10 +62,16 @@ Sterowanie należy zrealizować za pomocą strzałek/kursorów.
 				const oheight = car_h;
 				var x = cw / 2 + (Math.random() < 0.5 ? road_w / 4 : -road_w / 4);
 				var y = - oheight / 2;
-
-				obstacles.push([
-					x, y, owidth, oheight
-				]);
+				
+				if (Math.random() <= 0.5) {
+					obstacles.push([
+						x, y, owidth, oheight
+					]);
+				} else {
+					obstacles.push([
+						x, y, oheight, owidth
+					]);
+				}
 			}
 
 			function frame(timestamp) {
