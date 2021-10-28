@@ -26,6 +26,11 @@ Sterowanie należy zrealizować za pomocą strzałek/kursorów.
 			const n_stripes = ch / stripe_height;
 			var stripe_y = 0;
 
+			const side_width = 25;
+			const side_height = 35;
+			const n_side_stripes = ch / side_height;
+			var side_stripe_y = 0;
+
 			const road_w = cw * 0.75;
 			const road_x = (cw - road_w) / 2;
 
@@ -43,7 +48,11 @@ Sterowanie należy zrealizować za pomocą strzałek/kursorów.
 				starttime = timestamp;
 
 				handleKeys(frameInc);
-				c.clearRect(0, 0, cw, ch);
+				// c.clearRect(0, 0, cw, ch);
+				c.beginPath();
+				c.rect(0, 0, cw, ch);
+				c.fillStyle = 'green';
+				c.fill();
 
 				// road
 				c.beginPath();
@@ -64,6 +73,21 @@ Sterowanie należy zrealizować za pomocą strzałek/kursorów.
 				stripe_y += speed * frameInc;
 				if (stripe_y > stripe_height * 2) {
 					stripe_y -= stripe_height * 2;
+				}
+
+				// side lines 
+				let side_x = road_x - side_width;
+				for (var i = -2; i < n_side_stripes + 2; i++) {
+					c.beginPath();
+					c.rect(side_x, side_stripe_y + side_height * i, side_width, side_height);
+					c.rect(side_x + road_w + side_width, side_stripe_y + side_height * i, side_width, side_height);
+					c.fillStyle = i % 2 == 0 ? 'white' : 'red';
+					c.fill();
+				}
+
+				side_stripe_y += speed * frameInc;
+				if (side_stripe_y > side_height * 2) {
+					side_stripe_y -= side_height * 2;
 				}
 
 				// requestAnimationFrame(frame);
