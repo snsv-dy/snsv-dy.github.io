@@ -31,10 +31,16 @@ Sterowanie należy zrealizować za pomocą strzałek/kursorów.
 			const n_side_stripes = ch / side_height;
 			var side_stripe_y = 0;
 
-			const road_w = cw * 0.75;
+			const road_w = cw * 0.5;
 			const road_x = (cw - road_w) / 2;
 
 			const speed = 100;
+
+			var car_w = 75;
+			var car_h = 130;
+			var carx = cw / 2;
+			var cary = ch - car_h / 2 - 50;
+			const car_speed = 300;
 
 			var starttime = null;
 
@@ -87,8 +93,14 @@ Sterowanie należy zrealizować za pomocą strzałek/kursorów.
 
 				side_stripe_y += speed * frameInc;
 				if (side_stripe_y > side_height * 2) {
-					side_stripe_y -= side_height * 2;
+					side_stripe_y %= side_height * 2;
 				}
+
+				// car
+				c.beginPath();
+				c.rect(carx - car_w / 2, cary - (car_h / 2), car_w, car_h);
+				c.fillStyle = 'lime';
+				c.fill();
 
 				// requestAnimationFrame(frame);
 				setTimeout(requestAnimationFrame, 100, frame);
@@ -102,18 +114,26 @@ Sterowanie należy zrealizować za pomocą strzałek/kursorów.
 
 				//a - 65
 				//< - 37
-				const speed = 500 * dt;
+				// const speed = car_speed;
 				if ((keys[68] || keys[39])) { // prawo
-				
+					carx += car_speed * dt;
 				}
 
 				if ((keys[65] || keys[37])) { // lewo
-				
+					carx -= car_speed * dt;
 				}
-				
-				if (keys[32] && shootDelayCount < 0) {
 
+				if ((keys[87] || keys[38])) { // góra
+					cary -= car_speed * dt;
 				}
+
+				if ((keys[83] || keys[40])) { // dół
+					cary += car_speed * dt;
+				}
+				
+				// if (keys[32] && shootDelayCount < 0) {
+
+				// }
 			}
 
 
