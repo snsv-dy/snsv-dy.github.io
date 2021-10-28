@@ -1,0 +1,76 @@
+<!-- 1. Proszę przygotować animację, w której wyścigówka (prostokąt z kołam) jedzie na wprost po drodze. 
+Jako drogę proszę wykorzystać szary prostokąt (od góry do dołu) z białą przerywaną linią (białe prostokąty) 
+na środku oraz biało czerwonymi liniami po bokach, które się przesuwają (symulując ruch). 
+Sterowanie należy zrealizować za pomocą strzałek/kursorów.
+2. Proszę dodać pojawiające się przeszkody, które należy omijać -->
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+	</head>
+	<body>
+		<canvas width="800" height="600" style="border: 1px solid green;"></canvas>
+		<script>
+			var canvas = document.querySelector('canvas');
+			var c = canvas.getContext('2d');
+
+			var cw = canvas.width;
+			var ch = canvas.height;
+			var r = 50;
+			var color = 0;
+			var keys = [];
+
+			var starttime = null;
+
+			function frame(timestamp) {
+				
+				if (!starttime) starttime = timestamp;
+
+				var frameInc = (timestamp - starttime) / 1000;
+				starttime = timestamp;
+
+				handleKeys(frameInc);
+				c.clearRect(0, 0, cw, ch);
+
+				requestAnimationFrame(frame);
+				setTimeout(requestAnimationFrame, 10, frame);
+			}
+
+			frame();
+
+			function handleKeys(dt) {
+				//d - 68
+				//> - 39
+
+				//a - 65
+				//< - 37
+				const speed = 500 * dt;
+				if ((keys[68] || keys[39])) { // prawo
+				
+				}
+
+				if ((keys[65] || keys[37])) { // lewo
+				
+				}
+				
+				if (keys[32] && shootDelayCount < 0) {
+
+				}
+			}
+
+
+
+			document.body.addEventListener('keyup', keyUp);
+			document.body.addEventListener('keydown', keyDown);
+
+			function keyUp(e) {
+				keys[e.keyCode] = false;
+			}
+
+			function keyDown(e) {
+				keys[e.keyCode] = true;
+			}
+		</script>
+	</body>
+</html>
