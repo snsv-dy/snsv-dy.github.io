@@ -36,12 +36,20 @@ Sterowanie należy zrealizować za pomocą strzałek/kursorów.
 
 			const speed = 100;
 
-			var car_w = 75;
-			var car_h = 130;
+			const car_w = 60;
+			const car_h = 110;
 			var carx = cw / 2;
 			var cary = ch - car_h / 2 - 50;
 			const car_speed = 300;
 
+			const wheelw = 15;
+			const wheelh = 25;
+			const wheel_poses = [
+				[-car_w / 2, (car_h - wheelh * 2) / 2],
+				[(car_w) / 2, (car_h - wheelh * 2) / 2],
+				[(car_w) / 2, -(car_h - wheelh * 2) / 2],
+				[-(car_w) / 2, -(car_h - wheelh * 2) / 2]
+			];
 			var starttime = null;
 
 			function frame(timestamp) {
@@ -78,7 +86,7 @@ Sterowanie należy zrealizować za pomocą strzałek/kursorów.
 
 				stripe_y += speed * frameInc;
 				if (stripe_y > stripe_height * 2) {
-					stripe_y -= stripe_height * 2;
+					stripe_y %= stripe_height * 2;
 				}
 
 				// side lines 
@@ -94,6 +102,14 @@ Sterowanie należy zrealizować za pomocą strzałek/kursorów.
 				side_stripe_y += speed * frameInc;
 				if (side_stripe_y > side_height * 2) {
 					side_stripe_y %= side_height * 2;
+				}
+
+				// wheels
+				for (let pos of wheel_poses) {
+					c.beginPath();
+					c.rect(carx + pos[0] - wheelw / 2, cary + pos[1] - wheelh / 2, wheelw, wheelh);
+					c.fillStyle = 'black';
+					c.fill();
 				}
 
 				// car
@@ -115,19 +131,19 @@ Sterowanie należy zrealizować za pomocą strzałek/kursorów.
 				//a - 65
 				//< - 37
 				// const speed = car_speed;
-				if ((keys[68] || keys[39])) { // prawo
+				if ((carx + car_w / 2 <= road_x + road_w) && (keys[68] || keys[39])) { // prawo
 					carx += car_speed * dt;
 				}
 
-				if ((keys[65] || keys[37])) { // lewo
+				if ((carx - car_w / 2 >= road_x) && (keys[65] || keys[37])) { // lewo
 					carx -= car_speed * dt;
 				}
 
-				if ((keys[87] || keys[38])) { // góra
+				if ((cary - car_h / 2 >= 0) && (keys[87] || keys[38])) { // góra
 					cary -= car_speed * dt;
 				}
 
-				if ((keys[83] || keys[40])) { // dół
+				if ((cary + car_h / 2 <= ch) && (keys[83] || keys[40])) { // dół
 					cary += car_speed * dt;
 				}
 				
