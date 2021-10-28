@@ -21,11 +21,23 @@ Sterowanie należy zrealizować za pomocą strzałek/kursorów.
 			var color = 0;
 			var keys = [];
 
+			const stripe_height = 100;
+			const stripe_width = 25;
+			const n_stripes = ch / stripe_height;
+			var stripe_y = 0;
+
+			const road_w = cw * 0.75;
+			const road_x = (cw - road_w) / 2;
+
+			const speed = 100;
+
 			var starttime = null;
 
 			function frame(timestamp) {
 				
-				if (!starttime) starttime = timestamp;
+				if (!starttime) {
+					 starttime = timestamp;
+				}
 
 				var frameInc = (timestamp - starttime) / 1000;
 				starttime = timestamp;
@@ -33,11 +45,32 @@ Sterowanie należy zrealizować za pomocą strzałek/kursorów.
 				handleKeys(frameInc);
 				c.clearRect(0, 0, cw, ch);
 
-				requestAnimationFrame(frame);
-				setTimeout(requestAnimationFrame, 10, frame);
+				// road
+				c.beginPath();
+				c.rect(road_x, 0, road_w, ch);
+				c.fillStyle = 'gray';
+				c.fill();
+
+				// center line
+				const stripe_x = (cw - stripe_width) / 2;
+				c.fillStyle = 'white';
+				for (var i = -1; i < n_stripes + 2; i += 2) {
+
+					c.beginPath();
+					c.rect(stripe_x, stripe_y + stripe_height * i, stripe_width, stripe_height);
+					c.fill();
+				}
+
+				stripe_y += speed * frameInc;
+				if (stripe_y > stripe_height * 2) {
+					stripe_y -= stripe_height * 2;
+				}
+
+				// requestAnimationFrame(frame);
+				setTimeout(requestAnimationFrame, 100, frame);
 			}
 
-			frame();
+			requestAnimationFrame(frame);
 
 			function handleKeys(dt) {
 				//d - 68
