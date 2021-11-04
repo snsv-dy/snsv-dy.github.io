@@ -77,9 +77,10 @@
 
 				this.age = 0;
 				const maxage = 1;
-				this.r = 15;
+				this.r = 30 * (Math.random() * 0.4 + 0.6);
+				this.color = parseInt(60 * Math.random());
 
-				const speed_inc = 100;
+				const speed_inc = 200 * (Math.random() * 0.4 + 0.6);
 
 				var p = this;
 				this.update = function(timestamp) {
@@ -94,7 +95,7 @@
 					var age_frac = 1 - (p.age / maxage);
 					c.beginPath();
 					c.arc(p.x, p.y, p.r * age_frac, 0, 2 * Math.PI, false);
-					c.fillStyle = `hsl(0, ${100 * age_frac}%, 50%)`;
+					c.fillStyle = `hsl(${p.color}, ${100 * age_frac}%, 50%)`;
 					c.fill();
 				}
 			}
@@ -113,8 +114,8 @@
 				const angle = 2 * Math.PI / npartices;
 				
 				for (var i = 0; i < npartices; i++) {
-					var rand = Math.random() * 0.1 + 0.9;
-					var vel = rotatePoint(rand, -1 * rand, angle * i * rand);
+					var rand = Math.random() * 0.2 - 0.1;
+					var vel = rotatePoint(rand, -1 + rand, angle * i + rand);
 					particles.push(new explodeParticle(x, y, vel[0], vel[1]));
 				}
 			}
@@ -385,8 +386,8 @@
 				c.fillText(`Liczba zderzeń: ${obstacles_crashed}`, 0, ch - 10);
 				c.fillText(`Liczba punktów: ${bonuses_collected}`, 0, ch - 30);
 
-				// requestAnimationFrame(frame);
-				setTimeout(requestAnimationFrame, 100, frame);
+				requestAnimationFrame(frame);
+				// setTimeout(requestAnimationFrame, 100, frame);
 			}
 
 			requestAnimationFrame(frame);
