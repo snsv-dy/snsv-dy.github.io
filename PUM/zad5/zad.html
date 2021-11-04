@@ -32,7 +32,7 @@
 			const road_w = cw * 0.5;
 			const road_x = (cw - road_w) / 2;
 
-			const speed = 100;
+			var speed = 100;
 
 			const car_w = 60;
 			const car_h = 110;
@@ -245,7 +245,7 @@
 				}
 
 				obstacle_counter += frameInc;
-				if (obstacle_counter >= obstacle_delay) {
+				if (obstacle_counter >= obstacle_delay * 100 / speed) {
 					last_entity == BONUS ? createObstacle() : createBonus();
 					last_entity = (last_entity + 1) & 1;
 
@@ -408,11 +408,14 @@
 				}
 
 				if ((cary - car_h / 2 >= 0) && (keys[87] || keys[38])) { // góra
-					cary -= car_speed * dt;
+					// cary -= car_speed * dt;
+					speed += car_speed * dt;
 				}
 
 				if ((cary + car_h / 2 <= ch) && (keys[83] || keys[40])) { // dół
-					cary += car_speed * dt;
+					// cary += car_speed * dt;
+					if (speed - car_speed * dt > 0)
+						speed -= car_speed * dt;
 				}
 				
 				if (keys[32] && shootDelayCount < 0) {
