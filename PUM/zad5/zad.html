@@ -48,7 +48,12 @@
 				[(car_w) / 2, -(car_h - wheelh * 2) / 2],
 				[-(car_w) / 2, -(car_h - wheelh * 2) / 2]
 			];
-			var starttime = null;
+			var shootDelay = 0.2;
+			var shootDelayCount = -1;
+
+			var bulletr = 5;
+			var bulletspeed = 450;
+			var bullets = [];
 
 			var obstacles = [];
 			const obstacle_delay = 3;
@@ -75,12 +80,22 @@
 			}
 
 			function carIntersect(r2) {
-			return !(r2[0] - r2[2] / 2 > (carx + car_w / 2) || 
-					r2[0] + r2[2] / 2 < (carx - car_w / 2) || 
-					r2[1] - r2[3] / 2 > (cary + car_h / 2) ||
-					r2[1] + r2[3] / 2 < (cary - car_h / 2));
+				return !(r2[0] - r2[2] / 2 > (carx + car_w / 2) || 
+						r2[0] + r2[2] / 2 < (carx - car_w / 2) || 
+						r2[1] - r2[3] / 2 > (cary + car_h / 2) ||
+						r2[1] + r2[3] / 2 < (cary - car_h / 2));
+			}
+			
+			function bulletIntersects(b, o) {
+				return !(o[0] - o[2] / 2 > (b[0] + bulletr) || 
+					o[0] + o[2] / 2 < (b[0] - bulletr) || 
+					o[1] - o[3] / 2 > (b[1] + bulletr) ||
+					o[1] + o[3] / 2 < (b[1] - bulletr));
+				// return (b[1] - bulletr > o[1] - o[3] / 2) ||
+
 			}
 
+			var starttime = null;
 
 			function frame(timestamp) {
 				
@@ -90,6 +105,54 @@
 
 				var frameInc = (timestamp - starttime) / 1000;
 				starttime = timestamp;
+
+				// Shooting
+				if (shootDelayCount >= 0) {
+					shootDelayCount -= frameInc;
+				}
+
+				// bullets
+				var bulleti = 0;
+				for (let bullet of bullets) {
+					var bulletx = bullet[0];
+					var bullety = bullet[1];
+
+					if (bullety + bulletr < 0) {
+						bullets.splice(bulleti, 1);
+					}
+
+					// Checking collision
+					// if (bullety + bulletr <= targetR * 2) {
+					// 	var i = 0;
+					// 	for (let target of targets) {
+					// 		var x = target * (targetR * 2 + 10) + targetR;
+					// 		if (bulletx + bulletr >= x - targetR && bulletx - bulletr <= x + targetR) {
+					// 			targets.splice(i, 1);
+					// 			bullets.splice(bulleti, 1);
+					// 			score++;
+					// 			break;
+					// 		}
+					// 		i++;
+					// 	}
+					// }
+					var hit = false;
+					for (var i = 0; i < obstacles.length; i++) {
+						var removeObs = false;
+						if (obstacles[1] > ch) {
+							removeObs = true;
+						} else {
+							if (bulletIntersects(bullet, obstacles[i])) {
+								obstacles.splice(i, 1);
+								bullets.splice(bulleti, 1);
+							}
+						}
+					}
+
+					if (!hit) {
+						bullet[1] -= bulletspeed * frameInc;
+						bulleti++;
+					}
+				}
 
 				obstacle_counter += frameInc;
 				if (obstacle_counter >= obstacle_delay) {
@@ -182,6 +245,39 @@
 					c.fill();
 				}
 
+				// bullets
+				var bulleti = 0;
+				for (let bullet of bullets) {
+					var bulletx = bullet[0];
+					var bullety = bullet[1];
+
+					c.beginPath();
+					c.arc(bulletx, bullety, bulletr, 0, 2*Math.PI, false);
+					c.fillStyle = 'green';
+					c.fill();
+					// if (bullety + bulletr < 0) {
+					// 	bullets.splice(bulleti, 1);
+					// }
+
+					// Checking collision
+					// if (bullety + bulletr <= targetR * 2) {
+					// 	var i = 0;
+					// 	for (let target of targets) {
+					// 		var x = target * (targetR * 2 + 10) + targetR;
+					// 		if (bulletx + bulletr >= x - targetR && bulletx - bulletr <= x + targetR) {
+					// 			targets.splice(i, 1);
+					// 			bullets.splice(bulleti, 1);
+					// 			score++;
+					// 			break;
+					// 		}
+					// 		i++;
+					// 	}
+					// }
+
+					bullet[1] -= bulletspeed * frameInc;
+					bulleti++;
+				}
+
 				// hud
 				c.beginPath();
 				c.font = '12pt Arial';
@@ -217,9 +313,11 @@
 					cary += car_speed * dt;
 				}
 				
-				// if (keys[32] && shootDelayCount < 0) {
-
-				// }
+				if (keys[32] && shootDelayCount < 0) {
+					// Shoot
+					bullets.push([carx, cary - car_h / 2 - bulletr]);
+					shootDelayCount = shootDelay;
+				}
 			}
 
 
