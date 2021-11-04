@@ -67,6 +67,41 @@
 
 			var last_entity = BONUS;
 
+			var particles = [];
+
+			function explodeParticle(x, y, vx, vy) {
+				this.x = x;
+				this.y = y;
+				this.vx = vx;
+				this.vy = vy;
+
+				this.age = 0;
+				const maxage = 1;
+				this.r = 15;
+
+				const speed = 100;
+
+				var p = this;
+				this.update = function(timestamp) {
+					this.x += p.vx * timestamp * speed;
+					this.y += p.vy * timestamp * speed;
+					this.age += timestamp;
+
+					return p.age >= maxage;
+				}
+
+				this.draw = function() {
+					c.beginPath();
+					c.arc(p.x, p.y, p.r, 0, 2 * Math.PI, false);
+					c.fillStyle = 'red';
+					c.fill();
+				}
+			}
+
+			function createExplosion(x, y) {
+				particles.push(new explodeParticle(x, y, -1, 1));
+			}
+
 			function createObstacle() {
 				const owidth = car_w;
 				const oheight = car_h;
@@ -133,6 +168,15 @@
 					shootDelayCount -= frameInc;
 				}
 
+				for (var i = 0; i < particles.length; ) {
+					let p = particles[i];
+					if (p.update(frameInc)) {
+						particles.splice(i, 1);
+					} else {
+						i++;
+					}
+				}
+
 				// bullets
 				var bulleti = 0;
 				for (let bullet of bullets) {
@@ -171,6 +215,7 @@
 							bulletIntersects([bulletx, bullety - bulletspeed * frameInc / 2], obstacles[i])) {
 								obstacles.splice(i, 1);
 								bullets.splice(bulleti, 1);
+								createExplosion(obstacles[i][0], obstacles[i][1])
 							}
 						}
 					}
@@ -309,6 +354,11 @@
 
 					bullet[1] -= bulletspeed * frameInc;
 					bulleti++;
+				}
+
+				// particles
+				for (p of particles) {
+					p.draw();
 				}
 
 				// hud
