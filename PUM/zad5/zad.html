@@ -60,9 +60,14 @@
 			var obstacle_counter = 0;
 
 			var obstacles_crashed = 0;
+			var bonuses_collected = 0;
+
+			const OBSTACLE = 0;
+			const BONUS = 1;
+
+			var last_entity = BONUS;
 
 			function createObstacle() {
-				console.log();
 				const owidth = car_w;
 				const oheight = car_h;
 				var x = cw / 2 + (Math.random() < 0.5 ? road_w / 4 : -road_w / 4);
@@ -70,11 +75,28 @@
 				
 				if (Math.random() <= 0.5) {
 					obstacles.push([
-						x, y, owidth, oheight
+						x, y, owidth, oheight, OBSTACLE
 					]);
 				} else {
 					obstacles.push([
-						x, y, oheight, owidth
+						x, y, oheight, owidth, OBSTACLE
+					]);
+				}
+			}
+
+			function createBonus() {
+				const owidth = 30;
+				const oheight = 30;
+				var x = cw / 2 + (Math.random() < 0.5 ? road_w / 4 : -road_w / 4);
+				var y = - oheight / 2;
+				
+				if (Math.random() <= 0.5) {
+					obstacles.push([
+						x, y, owidth, oheight, BONUS
+					]);
+				} else {
+					obstacles.push([
+						x, y, oheight, owidth, BONUS
 					]);
 				}
 			}
@@ -85,7 +107,7 @@
 						r2[1] - r2[3] / 2 > (cary + car_h / 2) ||
 						r2[1] + r2[3] / 2 < (cary - car_h / 2));
 			}
-			
+
 			function bulletIntersects(b, o) {
 				return !(o[0] - o[2] / 2 > (b[0] + bulletr) || 
 					o[0] + o[2] / 2 < (b[0] - bulletr) || 
@@ -137,11 +159,16 @@
 					// }
 					var hit = false;
 					for (var i = 0; i < obstacles.length; i++) {
+						if (obstacles[i][4] == BONUS) {
+							continue;
+						}
+
 						var removeObs = false;
-						if (obstacles[1] > ch) {
+						if (obstacles[i][1] > ch) {
 							removeObs = true;
 						} else {
-							if (bulletIntersects(bullet, obstacles[i])) {
+							if (bulletIntersects(bullet, obstacles[i]) || 
+							bulletIntersects([bulletx, bullety - bulletspeed * frameInc / 2], obstacles[i])) {
 								obstacles.splice(i, 1);
 								bullets.splice(bulleti, 1);
 							}
@@ -156,19 +183,21 @@
 
 				obstacle_counter += frameInc;
 				if (obstacle_counter >= obstacle_delay) {
-					createObstacle();
+					last_entity == BONUS ? createObstacle() : createBonus();
+					last_entity = (last_entity + 1) & 1;
+
 					obstacle_counter = 0;
 				}
 
 				for (var i = 0; i < obstacles.length; i++) {
 					obstacles[i][1] += speed * frameInc;
 					var removeObs = false;
-					if (obstacles[1] > ch) {
+					if (obstacles[i][1] > ch) {
 						removeObs = true;
 					} else {
 						if (carIntersect(obstacles[i])) {
-							cary += speed * frameInc;
-							obstacles_crashed++;
+							obstacles[i][4] == OBSTACLE ? obstacles_crashed++ : bonuses_collected++;
+							// cary += speed * frameInc;
 							removeObs = true;
 						}
 					}
@@ -241,7 +270,11 @@
 				for (let ob of obstacles) {
 					c.beginPath();
 					c.rect(ob[0] - ob[2] / 2, ob[1] - ob[3] / 2, ob[2], ob[3]);
-					c.fillStyle = 'blue';
+					if (ob[4] == OBSTACLE) {
+						c.fillStyle = 'blue';
+					} else {
+						c.fillStyle = 'orange';
+					}
 					c.fill();
 				}
 
@@ -283,6 +316,7 @@
 				c.font = '12pt Arial';
 				c.fillStyle = 'white';
 				c.fillText(`Liczba zderzeń: ${obstacles_crashed}`, 0, ch - 10);
+				c.fillText(`Liczba punktów: ${bonuses_collected}`, 0, ch - 30);
 
 				// requestAnimationFrame(frame);
 				setTimeout(requestAnimationFrame, 100, frame);
