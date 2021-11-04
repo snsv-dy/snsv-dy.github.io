@@ -79,27 +79,44 @@
 				const maxage = 1;
 				this.r = 15;
 
-				const speed = 100;
+				const speed_inc = 100;
 
 				var p = this;
 				this.update = function(timestamp) {
-					this.x += p.vx * timestamp * speed;
-					this.y += p.vy * timestamp * speed;
+					this.x += p.vx * timestamp * speed_inc;
+					this.y += (p.vy * speed_inc + speed) * timestamp;
 					this.age += timestamp;
 
 					return p.age >= maxage;
 				}
 
 				this.draw = function() {
+					var age_frac = 1 - (p.age / maxage);
 					c.beginPath();
-					c.arc(p.x, p.y, p.r, 0, 2 * Math.PI, false);
-					c.fillStyle = 'red';
+					c.arc(p.x, p.y, p.r * age_frac, 0, 2 * Math.PI, false);
+					c.fillStyle = `hsl(0, ${100 * age_frac}%, 50%)`;
 					c.fill();
 				}
 			}
 
+			function rotatePoint(x, y, angle) {
+				var sinv = Math.sin(angle);
+				var cosv = Math.cos(angle);
+				return [
+					cosv*x - sinv*y,
+					sinv*x + cosv*y
+				];
+			}
+
 			function createExplosion(x, y) {
-				particles.push(new explodeParticle(x, y, -1, 1));
+				const npartices = 15;
+				const angle = 2 * Math.PI / npartices;
+				
+				for (var i = 0; i < npartices; i++) {
+					var rand = Math.random() * 0.1 + 0.9;
+					var vel = rotatePoint(rand, -1 * rand, angle * i * rand);
+					particles.push(new explodeParticle(x, y, vel[0], vel[1]));
+				}
 			}
 
 			function createObstacle() {
@@ -213,9 +230,9 @@
 						} else {
 							if (bulletIntersects(bullet, obstacles[i]) || 
 							bulletIntersects([bulletx, bullety - bulletspeed * frameInc / 2], obstacles[i])) {
+								createExplosion(obstacles[i][0], obstacles[i][1])
 								obstacles.splice(i, 1);
 								bullets.splice(bulleti, 1);
-								createExplosion(obstacles[i][0], obstacles[i][1])
 							}
 						}
 					}
