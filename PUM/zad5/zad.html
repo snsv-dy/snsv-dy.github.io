@@ -54,6 +54,8 @@
 			const obstacle_delay = 3;
 			var obstacle_counter = 0;
 
+			var obstacles_crashed = 0;
+
 			function createObstacle() {
 				console.log();
 				const owidth = car_w;
@@ -97,14 +99,20 @@
 
 				for (var i = 0; i < obstacles.length; i++) {
 					obstacles[i][1] += speed * frameInc;
+					var removeObs = false;
 					if (obstacles[1] > ch) {
-						obstacles.splice(i, 1);
-						if (i < obstacles.length - 1)
-							i--;
+						removeObs = true;
 					} else {
 						if (carIntersect(obstacles[i])) {
 							cary += speed * frameInc;
+							obstacles_crashed++;
+							removeObs = true;
 						}
+					}
+					if (removeObs) {
+						obstacles.splice(i, 1);
+						if (i < obstacles.length - 1)
+							i--;
 					}
 				}
 
@@ -173,6 +181,12 @@
 					c.fillStyle = 'blue';
 					c.fill();
 				}
+
+				// hud
+				c.beginPath();
+				c.font = '12pt Arial';
+				c.fillStyle = 'white';
+				c.fillText(`Liczba zderzeń: ${obstacles_crashed}`, 0, ch - 10);
 
 				// requestAnimationFrame(frame);
 				setTimeout(requestAnimationFrame, 100, frame);
