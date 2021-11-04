@@ -1,0 +1,225 @@
+<!-- 1. Proszę poprawić błędy z zadania pierwszego.
+2. Proszę dodać możliwość strzelania (spacją) i niszczenia przeszkód.
+3. Proszę dodać "bonusy", które należy "zbierać" samochodem po najechaniu na nie. 
+	Liczbę zdobytych bonusów proszę przedstawić w formie punktacji (jako część canvasa, a nie labela poza nim). -->
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+	</head>
+	<body>
+		<canvas width="800" height="600" style="border: 1px solid green;"></canvas>
+		<script>
+			var canvas = document.querySelector('canvas');
+			var c = canvas.getContext('2d');
+
+			var cw = canvas.width;
+			var ch = canvas.height;
+			var r = 50;
+			var color = 0;
+			var keys = [];
+
+			const stripe_height = 100;
+			const stripe_width = 25;
+			const n_stripes = ch / stripe_height;
+			var stripe_y = 0;
+
+			const side_width = 25;
+			const side_height = 35;
+			const n_side_stripes = ch / side_height;
+			var side_stripe_y = 0;
+
+			const road_w = cw * 0.5;
+			const road_x = (cw - road_w) / 2;
+
+			const speed = 100;
+
+			const car_w = 60;
+			const car_h = 110;
+			var carx = cw / 2;
+			var cary = ch - car_h / 2 - 50;
+			const car_speed = 300;
+
+			const wheelw = 15;
+			const wheelh = 25;
+			const wheel_poses = [
+				[-car_w / 2, (car_h - wheelh * 2) / 2],
+				[(car_w) / 2, (car_h - wheelh * 2) / 2],
+				[(car_w) / 2, -(car_h - wheelh * 2) / 2],
+				[-(car_w) / 2, -(car_h - wheelh * 2) / 2]
+			];
+			var starttime = null;
+
+			var obstacles = [];
+			const obstacle_delay = 3;
+			var obstacle_counter = 0;
+
+			function createObstacle() {
+				console.log();
+				const owidth = car_w;
+				const oheight = car_h;
+				var x = cw / 2 + (Math.random() < 0.5 ? road_w / 4 : -road_w / 4);
+				var y = - oheight / 2;
+				
+				if (Math.random() <= 0.5) {
+					obstacles.push([
+						x, y, owidth, oheight
+					]);
+				} else {
+					obstacles.push([
+						x, y, oheight, owidth
+					]);
+				}
+			}
+
+			function carIntersect(r2) {
+			return !(r2[0] - r2[2] / 2 > (carx + car_w / 2) || 
+					r2[0] + r2[2] / 2 < (carx - car_w / 2) || 
+					r2[1] - r2[3] / 2 > (cary + car_h / 2) ||
+					r2[1] + r2[3] / 2 < (cary - car_h / 2));
+			}
+
+
+			function frame(timestamp) {
+				
+				if (!starttime) {
+					 starttime = timestamp;
+				}
+
+				var frameInc = (timestamp - starttime) / 1000;
+				starttime = timestamp;
+
+				obstacle_counter += frameInc;
+				if (obstacle_counter >= obstacle_delay) {
+					createObstacle();
+					obstacle_counter = 0;
+				}
+
+				for (var i = 0; i < obstacles.length; i++) {
+					obstacles[i][1] += speed * frameInc;
+					if (obstacles[1] > ch) {
+						obstacles.splice(i, 1);
+						if (i < obstacles.length - 1)
+							i--;
+					} else {
+						if (carIntersect(obstacles[i])) {
+							cary += speed * frameInc;
+						}
+					}
+				}
+
+				handleKeys(frameInc);
+				// c.clearRect(0, 0, cw, ch);
+				c.beginPath();
+				c.rect(0, 0, cw, ch);
+				c.fillStyle = 'green';
+				c.fill();
+
+				// road
+				c.beginPath();
+				c.rect(road_x, 0, road_w, ch);
+				c.fillStyle = 'gray';
+				c.fill();
+
+				// center line
+				const stripe_x = (cw - stripe_width) / 2;
+				c.fillStyle = 'white';
+				for (var i = -1; i < n_stripes + 2; i += 2) {
+
+					c.beginPath();
+					c.rect(stripe_x, stripe_y + stripe_height * i, stripe_width, stripe_height);
+					c.fill();
+				}
+
+				stripe_y += speed * frameInc;
+				if (stripe_y > stripe_height * 2) {
+					stripe_y %= stripe_height * 2;
+				}
+
+				// side lines 
+				let side_x = road_x - side_width;
+				for (var i = -2; i < n_side_stripes + 2; i++) {
+					c.beginPath();
+					c.rect(side_x, side_stripe_y + side_height * i, side_width, side_height);
+					c.rect(side_x + road_w + side_width, side_stripe_y + side_height * i, side_width, side_height);
+					c.fillStyle = i % 2 == 0 ? 'white' : 'red';
+					c.fill();
+				}
+
+				side_stripe_y += speed * frameInc;
+				if (side_stripe_y > side_height * 2) {
+					side_stripe_y %= side_height * 2;
+				}
+
+				// wheels
+				for (let pos of wheel_poses) {
+					c.beginPath();
+					c.rect(carx + pos[0] - wheelw / 2, cary + pos[1] - wheelh / 2, wheelw, wheelh);
+					c.fillStyle = 'black';
+					c.fill();
+				}
+
+				// car
+				c.beginPath();
+				c.rect(carx - car_w / 2, cary - (car_h / 2), car_w, car_h);
+				c.fillStyle = 'lime';
+				c.fill();
+
+
+				// obstacles
+				for (let ob of obstacles) {
+					c.beginPath();
+					c.rect(ob[0] - ob[2] / 2, ob[1] - ob[3] / 2, ob[2], ob[3]);
+					c.fillStyle = 'blue';
+					c.fill();
+				}
+
+				// requestAnimationFrame(frame);
+				setTimeout(requestAnimationFrame, 100, frame);
+			}
+
+			requestAnimationFrame(frame);
+
+			function handleKeys(dt) {
+				//d - 68
+				//> - 39
+
+				//a - 65
+				//< - 37
+				// const speed = car_speed;
+				if ((carx + car_w / 2 <= road_x + road_w) && (keys[68] || keys[39])) { // prawo
+					carx += car_speed * dt;
+				}
+
+				if ((carx - car_w / 2 >= road_x) && (keys[65] || keys[37])) { // lewo
+					carx -= car_speed * dt;
+				}
+
+				if ((cary - car_h / 2 >= 0) && (keys[87] || keys[38])) { // góra
+					cary -= car_speed * dt;
+				}
+
+				if ((cary + car_h / 2 <= ch) && (keys[83] || keys[40])) { // dół
+					cary += car_speed * dt;
+				}
+				
+				// if (keys[32] && shootDelayCount < 0) {
+
+				// }
+			}
+
+
+
+			document.body.addEventListener('keyup', keyUp);
+			document.body.addEventListener('keydown', keyDown);
+
+			function keyUp(e) {
+				keys[e.keyCode] = false;
+			}
+
+			function keyDown(e) {
+				keys[e.keyCode] = true;
+			}
+		</script>
+	</body>
+</html>
