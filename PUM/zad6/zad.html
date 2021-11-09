@@ -1,7 +1,9 @@
-<!-- 1. Proszę poprawić błędy z zadania pierwszego.
-2. Proszę dodać możliwość strzelania (spacją) i niszczenia przeszkód.
-3. Proszę dodać "bonusy", które należy "zbierać" samochodem po najechaniu na nie. 
-	Liczbę zdobytych bonusów proszę przedstawić w formie punktacji (jako część canvasa, a nie labela poza nim). -->
+<!-- 
+	1. Proszę poprawić błędy z poprzedniego zadania.
+	2. Proszę dodać możliwość poruszania się w dwóch wymiarach
+	3. Proszę dodać możliwość skręcania.
+	4. Samochód ma przyśpieszać guzikami 'a' i 'z'. W canvasie ma być jakiś "wskaźnik" bądź "label" informujący o zmianie prędkości.
+ -->
 <!DOCTYPE html>
 <html>
 	<head>
@@ -33,6 +35,7 @@
 			const road_x = (cw - road_w) / 2;
 
 			var speed = 100;
+			const spmeter_r = 50;
 
 			const car_w = 60;
 			const car_h = 110;
@@ -386,8 +389,32 @@
 				c.fillText(`Liczba zderzeń: ${obstacles_crashed}`, 0, ch - 10);
 				c.fillText(`Liczba punktów: ${bonuses_collected}`, 0, ch - 30);
 
-				requestAnimationFrame(frame);
-				// setTimeout(requestAnimationFrame, 100, frame);
+				// speed
+				c.beginPath();
+				c.arc(cw - spmeter_r, ch - spmeter_r, spmeter_r, 0, 2 * Math.PI, false);
+				c.fillStyle = 'white';
+				c.fill();
+
+				c.beginPath();
+				c.moveTo(cw - spmeter_r, ch - spmeter_r);
+				var dial_angle = (speed / 300 * (30 / 180 * Math.PI));
+				var dial = rotatePoint(0, -1, -Math.PI * 0.8 + dial_angle);
+				c.lineTo(cw - spmeter_r + dial[0] * spmeter_r * 0.8, ch - spmeter_r + dial[1] * spmeter_r * 0.8);
+				c.strokeStyle = 'black';
+				c.stroke();
+
+				const n_labels = 10;
+				for (var i = 0; i < n_labels; i++) {
+					var dial_angle = (i *(30 / 180 * Math.PI));
+					var pos = rotatePoint(0, -1, -Math.PI * 0.8 + dial_angle);
+					c.beginPath();
+					c.font = '9pt Arial';
+					c.fillStyle = 'black';
+					c.fillText(i * 10 * 2, cw - spmeter_r + pos[0] * spmeter_r * 0.8 - 9, ch - spmeter_r + pos[1] * spmeter_r * 0.8 + 4);
+				}
+
+				// requestAnimationFrame(frame);
+				setTimeout(requestAnimationFrame, 100, frame);
 			}
 
 			requestAnimationFrame(frame);
