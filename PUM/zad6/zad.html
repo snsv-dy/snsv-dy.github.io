@@ -37,6 +37,13 @@
 			var speed = 100;
 			const spmeter_r = 50;
 
+			var turn_angle = 2;
+			var current_turn = {
+				max_angle: 5,
+				duration: 3,
+				cur_pos: 0,
+			};
+
 			const car_w = 60;
 			const car_h = 110;
 			var carx = cw / 2;
@@ -184,6 +191,16 @@
 				var frameInc = (timestamp - starttime) / 1000;
 				starttime = timestamp;
 
+				if (current_turn != null) {
+					current_turn.cur_pos += frameInc;
+					if (current_turn.cur_pos < current_turn.duration / 2) {
+						turn_angle = current_turn.max_angle * current_turn.cur_pos;
+					} else {
+						turn_angle = current_turn.max_angle * (current_turn.max_angle -  current_turn.cur_pos);
+					}
+				}
+				
+
 				// Shooting
 				if (shootDelayCount >= 0) {
 					shootDelayCount -= frameInc;
@@ -274,23 +291,28 @@
 					}
 				}
 
+				// Turn rotation
+				c.translate(cw / 2, ch / 2);
+				c.rotate(turn_angle * Math.PI / 180);
+				c.translate(-cw / 2, -ch / 2);
+
 				handleKeys(frameInc);
 				// c.clearRect(0, 0, cw, ch);
 				c.beginPath();
-				c.rect(0, 0, cw, ch);
+				c.rect(-cw / 2, -ch / 2, cw * 2, ch * 2);
 				c.fillStyle = 'green';
 				c.fill();
 
 				// road
 				c.beginPath();
-				c.rect(road_x, 0, road_w, ch);
+				c.rect(road_x, -ch / 2, road_w, ch * 2);
 				c.fillStyle = 'gray';
 				c.fill();
 
 				// center line
 				const stripe_x = (cw - stripe_width) / 2;
 				c.fillStyle = 'white';
-				for (var i = -1; i < n_stripes + 2; i += 2) {
+				for (var i = -3; i < n_stripes + 2; i += 2) {
 
 					c.beginPath();
 					c.rect(stripe_x, stripe_y + stripe_height * i, stripe_width, stripe_height);
@@ -304,7 +326,7 @@
 
 				// side lines 
 				let side_x = road_x - side_width;
-				for (var i = -2; i < n_side_stripes + 2; i++) {
+				for (var i = -5; i < n_side_stripes + 2; i++) {
 					c.beginPath();
 					c.rect(side_x, side_stripe_y + side_height * i, side_width, side_height);
 					c.rect(side_x + road_w + side_width, side_stripe_y + side_height * i, side_width, side_height);
@@ -381,6 +403,11 @@
 				for (p of particles) {
 					p.draw();
 				}
+
+				// Restore orientation
+				c.translate(cw / 2, ch / 2);
+				c.rotate(-turn_angle * Math.PI / 180);
+				c.translate(-cw / 2, -ch / 2);
 
 				// hud
 				c.beginPath();
