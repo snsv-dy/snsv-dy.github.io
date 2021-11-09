@@ -1,0 +1,442 @@
+<!-- 1. Proszę poprawić błędy z zadania pierwszego.
+2. Proszę dodać możliwość strzelania (spacją) i niszczenia przeszkód.
+3. Proszę dodać "bonusy", które należy "zbierać" samochodem po najechaniu na nie. 
+	Liczbę zdobytych bonusów proszę przedstawić w formie punktacji (jako część canvasa, a nie labela poza nim). -->
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+	</head>
+	<body>
+		<canvas width="800" height="600" style="border: 1px solid green;"></canvas>
+		<script>
+			var canvas = document.querySelector('canvas');
+			var c = canvas.getContext('2d');
+
+			var cw = canvas.width;
+			var ch = canvas.height;
+			var r = 50;
+			var color = 0;
+			var keys = [];
+
+			const stripe_height = 100;
+			const stripe_width = 25;
+			const n_stripes = ch / stripe_height;
+			var stripe_y = 0;
+
+			const side_width = 25;
+			const side_height = 35;
+			const n_side_stripes = ch / side_height;
+			var side_stripe_y = 0;
+
+			const road_w = cw * 0.5;
+			const road_x = (cw - road_w) / 2;
+
+			var speed = 100;
+
+			const car_w = 60;
+			const car_h = 110;
+			var carx = cw / 2;
+			var cary = ch - car_h / 2 - 50;
+			const car_speed = 300;
+
+			const wheelw = 15;
+			const wheelh = 25;
+			const wheel_poses = [
+				[-car_w / 2, (car_h - wheelh * 2) / 2],
+				[(car_w) / 2, (car_h - wheelh * 2) / 2],
+				[(car_w) / 2, -(car_h - wheelh * 2) / 2],
+				[-(car_w) / 2, -(car_h - wheelh * 2) / 2]
+			];
+			var shootDelay = 0.2;
+			var shootDelayCount = -1;
+
+			var bulletr = 5;
+			var bulletspeed = 450;
+			var bullets = [];
+
+			var obstacles = [];
+			const obstacle_delay = 3;
+			var obstacle_counter = 0;
+
+			var obstacles_crashed = 0;
+			var bonuses_collected = 0;
+
+			const OBSTACLE = 0;
+			const BONUS = 1;
+
+			var last_entity = BONUS;
+
+			var particles = [];
+
+			function explodeParticle(x, y, vx, vy) {
+				this.x = x;
+				this.y = y;
+				this.vx = vx;
+				this.vy = vy;
+
+				this.age = 0;
+				const maxage = 1;
+				this.r = 30 * (Math.random() * 0.4 + 0.6);
+				this.color = parseInt(60 * Math.random());
+
+				const speed_inc = 200 * (Math.random() * 0.4 + 0.6);
+
+				var p = this;
+				this.update = function(timestamp) {
+					this.x += p.vx * timestamp * speed_inc;
+					this.y += (p.vy * speed_inc + speed) * timestamp;
+					this.age += timestamp;
+
+					return p.age >= maxage;
+				}
+
+				this.draw = function() {
+					var age_frac = 1 - (p.age / maxage);
+					c.beginPath();
+					c.arc(p.x, p.y, p.r * age_frac, 0, 2 * Math.PI, false);
+					c.fillStyle = `hsl(${p.color}, ${100 * age_frac}%, 50%)`;
+					c.fill();
+				}
+			}
+
+			function rotatePoint(x, y, angle) {
+				var sinv = Math.sin(angle);
+				var cosv = Math.cos(angle);
+				return [
+					cosv*x - sinv*y,
+					sinv*x + cosv*y
+				];
+			}
+
+			function createExplosion(x, y) {
+				const npartices = 15;
+				const angle = 2 * Math.PI / npartices;
+				
+				for (var i = 0; i < npartices; i++) {
+					var rand = Math.random() * 0.2 - 0.1;
+					var vel = rotatePoint(rand, -1 + rand, angle * i + rand);
+					particles.push(new explodeParticle(x, y, vel[0], vel[1]));
+				}
+			}
+
+			function createObstacle() {
+				const owidth = car_w;
+				const oheight = car_h;
+				var x = cw / 2 + (Math.random() < 0.5 ? road_w / 4 : -road_w / 4);
+				var y = - oheight / 2;
+				
+				if (Math.random() <= 0.5) {
+					obstacles.push([
+						x, y, owidth, oheight, OBSTACLE
+					]);
+				} else {
+					obstacles.push([
+						x, y, oheight, owidth, OBSTACLE
+					]);
+				}
+			}
+
+			function createBonus() {
+				const owidth = 30;
+				const oheight = 30;
+				var x = cw / 2 + (Math.random() < 0.5 ? road_w / 4 : -road_w / 4);
+				var y = - oheight / 2;
+				
+				if (Math.random() <= 0.5) {
+					obstacles.push([
+						x, y, owidth, oheight, BONUS
+					]);
+				} else {
+					obstacles.push([
+						x, y, oheight, owidth, BONUS
+					]);
+				}
+			}
+
+			function carIntersect(r2) {
+				return !(r2[0] - r2[2] / 2 > (carx + car_w / 2) || 
+						r2[0] + r2[2] / 2 < (carx - car_w / 2) || 
+						r2[1] - r2[3] / 2 > (cary + car_h / 2) ||
+						r2[1] + r2[3] / 2 < (cary - car_h / 2));
+			}
+
+			function bulletIntersects(b, o) {
+				return !(o[0] - o[2] / 2 > (b[0] + bulletr) || 
+					o[0] + o[2] / 2 < (b[0] - bulletr) || 
+					o[1] - o[3] / 2 > (b[1] + bulletr) ||
+					o[1] + o[3] / 2 < (b[1] - bulletr));
+				// return (b[1] - bulletr > o[1] - o[3] / 2) ||
+
+			}
+
+			var starttime = null;
+
+			function frame(timestamp) {
+				
+				if (!starttime) {
+					 starttime = timestamp;
+				}
+
+				var frameInc = (timestamp - starttime) / 1000;
+				starttime = timestamp;
+
+				// Shooting
+				if (shootDelayCount >= 0) {
+					shootDelayCount -= frameInc;
+				}
+
+				for (var i = 0; i < particles.length; ) {
+					let p = particles[i];
+					if (p.update(frameInc)) {
+						particles.splice(i, 1);
+					} else {
+						i++;
+					}
+				}
+
+				// bullets
+				var bulleti = 0;
+				for (let bullet of bullets) {
+					var bulletx = bullet[0];
+					var bullety = bullet[1];
+
+					if (bullety + bulletr < 0) {
+						bullets.splice(bulleti, 1);
+					}
+
+					// Checking collision
+					// if (bullety + bulletr <= targetR * 2) {
+					// 	var i = 0;
+					// 	for (let target of targets) {
+					// 		var x = target * (targetR * 2 + 10) + targetR;
+					// 		if (bulletx + bulletr >= x - targetR && bulletx - bulletr <= x + targetR) {
+					// 			targets.splice(i, 1);
+					// 			bullets.splice(bulleti, 1);
+					// 			score++;
+					// 			break;
+					// 		}
+					// 		i++;
+					// 	}
+					// }
+					var hit = false;
+					for (var i = 0; i < obstacles.length; i++) {
+						if (obstacles[i][4] == BONUS) {
+							continue;
+						}
+
+						var removeObs = false;
+						if (obstacles[i][1] > ch) {
+							removeObs = true;
+						} else {
+							if (bulletIntersects(bullet, obstacles[i]) || 
+							bulletIntersects([bulletx, bullety - bulletspeed * frameInc / 2], obstacles[i])) {
+								createExplosion(obstacles[i][0], obstacles[i][1])
+								obstacles.splice(i, 1);
+								bullets.splice(bulleti, 1);
+							}
+						}
+					}
+
+					if (!hit) {
+						bullet[1] -= bulletspeed * frameInc;
+						bulleti++;
+					}
+				}
+
+				obstacle_counter += frameInc;
+				if (obstacle_counter >= obstacle_delay * 100 / speed) {
+					last_entity == BONUS ? createObstacle() : createBonus();
+					last_entity = (last_entity + 1) & 1;
+
+					obstacle_counter = 0;
+				}
+
+				for (var i = 0; i < obstacles.length; i++) {
+					obstacles[i][1] += speed * frameInc;
+					var removeObs = false;
+					if (obstacles[i][1] > ch) {
+						removeObs = true;
+					} else {
+						if (carIntersect(obstacles[i])) {
+							obstacles[i][4] == OBSTACLE ? obstacles_crashed++ : bonuses_collected++;
+							// cary += speed * frameInc;
+							removeObs = true;
+						}
+					}
+					if (removeObs) {
+						obstacles.splice(i, 1);
+						if (i < obstacles.length - 1)
+							i--;
+					}
+				}
+
+				handleKeys(frameInc);
+				// c.clearRect(0, 0, cw, ch);
+				c.beginPath();
+				c.rect(0, 0, cw, ch);
+				c.fillStyle = 'green';
+				c.fill();
+
+				// road
+				c.beginPath();
+				c.rect(road_x, 0, road_w, ch);
+				c.fillStyle = 'gray';
+				c.fill();
+
+				// center line
+				const stripe_x = (cw - stripe_width) / 2;
+				c.fillStyle = 'white';
+				for (var i = -1; i < n_stripes + 2; i += 2) {
+
+					c.beginPath();
+					c.rect(stripe_x, stripe_y + stripe_height * i, stripe_width, stripe_height);
+					c.fill();
+				}
+
+				stripe_y += speed * frameInc;
+				if (stripe_y > stripe_height * 2) {
+					stripe_y %= stripe_height * 2;
+				}
+
+				// side lines 
+				let side_x = road_x - side_width;
+				for (var i = -2; i < n_side_stripes + 2; i++) {
+					c.beginPath();
+					c.rect(side_x, side_stripe_y + side_height * i, side_width, side_height);
+					c.rect(side_x + road_w + side_width, side_stripe_y + side_height * i, side_width, side_height);
+					c.fillStyle = i % 2 == 0 ? 'white' : 'red';
+					c.fill();
+				}
+
+				side_stripe_y += speed * frameInc;
+				if (side_stripe_y > side_height * 2) {
+					side_stripe_y %= side_height * 2;
+				}
+
+				// wheels
+				for (let pos of wheel_poses) {
+					c.beginPath();
+					c.rect(carx + pos[0] - wheelw / 2, cary + pos[1] - wheelh / 2, wheelw, wheelh);
+					c.fillStyle = 'black';
+					c.fill();
+				}
+
+				// car
+				c.beginPath();
+				c.rect(carx - car_w / 2, cary - (car_h / 2), car_w, car_h);
+				c.fillStyle = 'lime';
+				c.fill();
+
+
+				// obstacles
+				for (let ob of obstacles) {
+					c.beginPath();
+					c.rect(ob[0] - ob[2] / 2, ob[1] - ob[3] / 2, ob[2], ob[3]);
+					if (ob[4] == OBSTACLE) {
+						c.fillStyle = 'blue';
+					} else {
+						c.fillStyle = 'orange';
+					}
+					c.fill();
+				}
+
+				// bullets
+				var bulleti = 0;
+				for (let bullet of bullets) {
+					var bulletx = bullet[0];
+					var bullety = bullet[1];
+
+					c.beginPath();
+					c.arc(bulletx, bullety, bulletr, 0, 2*Math.PI, false);
+					c.fillStyle = 'green';
+					c.fill();
+					// if (bullety + bulletr < 0) {
+					// 	bullets.splice(bulleti, 1);
+					// }
+
+					// Checking collision
+					// if (bullety + bulletr <= targetR * 2) {
+					// 	var i = 0;
+					// 	for (let target of targets) {
+					// 		var x = target * (targetR * 2 + 10) + targetR;
+					// 		if (bulletx + bulletr >= x - targetR && bulletx - bulletr <= x + targetR) {
+					// 			targets.splice(i, 1);
+					// 			bullets.splice(bulleti, 1);
+					// 			score++;
+					// 			break;
+					// 		}
+					// 		i++;
+					// 	}
+					// }
+
+					bullet[1] -= bulletspeed * frameInc;
+					bulleti++;
+				}
+
+				// particles
+				for (p of particles) {
+					p.draw();
+				}
+
+				// hud
+				c.beginPath();
+				c.font = '12pt Arial';
+				c.fillStyle = 'white';
+				c.fillText(`Liczba zderzeń: ${obstacles_crashed}`, 0, ch - 10);
+				c.fillText(`Liczba punktów: ${bonuses_collected}`, 0, ch - 30);
+
+				requestAnimationFrame(frame);
+				// setTimeout(requestAnimationFrame, 100, frame);
+			}
+
+			requestAnimationFrame(frame);
+
+			function handleKeys(dt) {
+				//d - 68
+				//> - 39
+
+				//a - 65
+				//< - 37
+				// const speed = car_speed;
+				if ((carx + car_w / 2 <= road_x + road_w) && (keys[68] || keys[39])) { // prawo
+					carx += car_speed * dt;
+				}
+
+				if ((carx - car_w / 2 >= road_x) && (keys[65] || keys[37])) { // lewo
+					carx -= car_speed * dt;
+				}
+
+				if ((cary - car_h / 2 >= 0) && (keys[87] || keys[38])) { // góra
+					// cary -= car_speed * dt;
+					speed += car_speed * dt;
+				}
+
+				if ((cary + car_h / 2 <= ch) && (keys[83] || keys[40])) { // dół
+					// cary += car_speed * dt;
+					if (speed - car_speed * dt > 0)
+						speed -= car_speed * dt;
+				}
+				
+				if (keys[32] && shootDelayCount < 0) {
+					// Shoot
+					bullets.push([carx, cary - car_h / 2 - bulletr]);
+					shootDelayCount = shootDelay;
+				}
+			}
+
+
+
+			document.body.addEventListener('keyup', keyUp);
+			document.body.addEventListener('keydown', keyDown);
+
+			function keyUp(e) {
+				keys[e.keyCode] = false;
+			}
+
+			function keyDown(e) {
+				keys[e.keyCode] = true;
+			}
+		</script>
+	</body>
+</html>
