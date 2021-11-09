@@ -39,7 +39,7 @@
 
 			var turn_angle = 2;
 			var current_turn = {
-				max_angle: 5,
+				max_angle: 10,
 				duration: 3,
 				cur_pos: 0,
 			};
@@ -180,6 +180,16 @@
 
 			}
 
+			function createCurve() {
+				var angle = Math.random() * 20 * (Math.random() < 0.5 ? 1 : -1) + 3;
+				angle = Math.random() < 0.2 ? 0 : angle;
+				current_turn = {
+					max_angle: angle,
+					duration: Math.abs(Math.random() * angle) + Math.random() * 9 + 1,
+					cur_pos: 0,
+				};
+			}
+
 			var starttime = null;
 
 			function frame(timestamp) {
@@ -192,11 +202,15 @@
 				starttime = timestamp;
 
 				if (current_turn != null) {
-					current_turn.cur_pos += frameInc;
-					if (current_turn.cur_pos < current_turn.duration / 2) {
-						turn_angle = current_turn.max_angle * current_turn.cur_pos;
+					current_turn.cur_pos += frameInc * speed / 1000;
+					if (current_turn.cur_pos >= current_turn.duration) {
+						createCurve();
 					} else {
-						turn_angle = current_turn.max_angle * (current_turn.max_angle -  current_turn.cur_pos);
+						if (current_turn.cur_pos < current_turn.duration / 2) {
+							turn_angle = current_turn.max_angle * Math.sin(Math.PI * current_turn.cur_pos / current_turn.duration);
+						} else {
+							turn_angle = current_turn.max_angle *  Math.sin(Math.PI * (current_turn.duration - current_turn.cur_pos) / current_turn.duration);
+						}
 					}
 				}
 				
@@ -292,9 +306,9 @@
 				}
 
 				// Turn rotation
-				c.translate(cw / 2, ch / 2);
+				c.translate(cw / 2, ch);
 				c.rotate(turn_angle * Math.PI / 180);
-				c.translate(-cw / 2, -ch / 2);
+				c.translate(-cw / 2, -ch);
 
 				handleKeys(frameInc);
 				// c.clearRect(0, 0, cw, ch);
@@ -405,9 +419,9 @@
 				}
 
 				// Restore orientation
-				c.translate(cw / 2, ch / 2);
+				c.translate(cw / 2, ch);
 				c.rotate(-turn_angle * Math.PI / 180);
-				c.translate(-cw / 2, -ch / 2);
+				c.translate(-cw / 2, -ch);
 
 				// hud
 				c.beginPath();
@@ -442,8 +456,8 @@
 					c.fillText(i * 10 * 2, cw - spmeter_r + pos[0] * spmeter_r * 0.8 - 9, ch - spmeter_r + pos[1] * spmeter_r * 0.8 + 4);
 				}
 
-				// requestAnimationFrame(frame);
-				setTimeout(requestAnimationFrame, 100, frame);
+				requestAnimationFrame(frame);
+				// setTimeout(requestAnimationFrame, 100, frame);
 			}
 
 			requestAnimationFrame(frame);
