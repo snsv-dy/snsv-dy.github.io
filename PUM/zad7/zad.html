@@ -43,6 +43,22 @@
 
 			var speed = 100;
 
+			var obstacles = [];
+			const obs_width = 20;
+			const obs_height = 100;
+			const obs_variable = 0.2;
+
+			const obstacle_delay = 3;
+			var obstacle_counter = 0;
+
+			function addObstacle() {
+				var width = obs_width * (Math.random() * obs_variable + (1.0 - obs_variable));
+				var height = obs_height * (Math.random() * obs_variable + (1.0 - obs_variable));
+				
+				var t = [cw + width, road_y, width, height];
+				obstacles.push(t);
+			}
+
 			var starttime = null;
 
 			function frame(timestamp) {
@@ -55,6 +71,33 @@
 				starttime = timestamp;
 
 				handleKeys(frameInc);
+
+				obstacle_counter += frameInc;
+				if (obstacle_counter >= obstacle_delay * 100 / speed) {
+					createObstacle();
+
+					obstacle_counter = 0;
+				}
+
+				for (var i = 0; i < obstacles.length; i++) {
+					obstacles[i][0] -= speed * frameInc;
+					var removeObs = false;
+					if (obstacles[i][0] < -obstacles[i][2]) {
+						removeObs = true;
+					} else {
+						// if (carIntersect(obstacles[i])) {
+						// 	obstacles[i][4] == OBSTACLE ? obstacles_crashed++ : bonuses_collected++;
+						// 	// cary += speed * frameInc;
+						// 	removeObs = true;
+						// }
+					}
+
+					if (removeObs) {
+						obstacles.splice(i, 1);
+						if (i < obstacles.length - 1)
+							i--;
+					}
+				}
 
 				if (carvy != 0)  {
 					if (carvy < 0 && !keys[32]) {
@@ -101,10 +144,17 @@
 					side_stripe_x %= side_width * 2;
 				}
 
+				// obstacles
+				c.fillStyle = 'blue';
+				for (let o of obstacles) {
+					c.beginPath();
+					c.rect(o[0], o[1], o[2], o[3]);
+				}
+
 				// car
 				c.beginPath();
 				c.rect(carx, cary - car_h, car_w, car_h);
-				c.fillStyle = 'red';
+				c.fillStyle = 'lime';
 				c.fill();
 
 				requestAnimationFrame(frame);
