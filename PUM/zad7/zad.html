@@ -35,28 +35,37 @@
 			const car_h = 60;
 			var carx = car_w * 0.7;
 			var cary = road_y;
-			const car_speed = 800;
+			const car_speed = 600;
 
 			var carvy = 0;
 			var car_jump = false;
-			const gravity = 2000;
+			const gravity = 700;
 
-			var speed = 100;
+			var speed = 500;
 
 			var obstacles = [];
-			const obs_width = 20;
-			const obs_height = 100;
-			const obs_variable = 0.2;
+			const obs_width = 130;
+			const obs_height = 70;
+			const obs_variable = 0.3;
 
-			const obstacle_delay = 3;
+			const obstacle_delay = 6;
 			var obstacle_counter = 0;
 
-			function addObstacle() {
+			var score = 0;
+
+			function createObstacle() {
 				var width = obs_width * (Math.random() * obs_variable + (1.0 - obs_variable));
 				var height = obs_height * (Math.random() * obs_variable + (1.0 - obs_variable));
 				
-				var t = [cw + width, road_y, width, height];
+				var t = [cw + width, road_y - height, width, height];
 				obstacles.push(t);
+			}
+
+			function carIntersect(r2) {
+				return !(r2[0] - r2[2] / 2 > (carx + car_w) || 
+						r2[0] + r2[2] / 2 < (carx) || 
+						r2[1] - r2[3] / 2 > (cary) ||
+						r2[1] + r2[3] / 2 < (cary - car_h));
 			}
 
 			var starttime = null;
@@ -78,21 +87,24 @@
 
 					obstacle_counter = 0;
 				}
-
+				var boom = false;
 				for (var i = 0; i < obstacles.length; i++) {
 					obstacles[i][0] -= speed * frameInc;
 					var removeObs = false;
 					if (obstacles[i][0] < -obstacles[i][2]) {
 						removeObs = true;
 					} else {
-						// if (carIntersect(obstacles[i])) {
+						if (carIntersect(obstacles[i])) {
 						// 	obstacles[i][4] == OBSTACLE ? obstacles_crashed++ : bonuses_collected++;
 						// 	// cary += speed * frameInc;
 						// 	removeObs = true;
-						// }
+							console.log('boom');
+							boom = true;
+						}
 					}
 
 					if (removeObs) {
+						score++;
 						obstacles.splice(i, 1);
 						if (i < obstacles.length - 1)
 							i--;
@@ -149,6 +161,7 @@
 				for (let o of obstacles) {
 					c.beginPath();
 					c.rect(o[0], o[1], o[2], o[3]);
+					c.fill();
 				}
 
 				// car
@@ -156,6 +169,19 @@
 				c.rect(carx, cary - car_h, car_w, car_h);
 				c.fillStyle = 'lime';
 				c.fill();
+
+				// score
+				c.beginPath();
+				c.font = '20pt Arial';
+				c.fillStyle = 'black';
+				c.fillText(`Wynik: ${score}`, 10, 30);
+
+				if (boom) {
+					c.beginPath();
+					c.font = '20pt Arial';
+					c.fillStyle = 'black';
+					c.fillText(`Boom`, 10, 50);
+				}
 
 				requestAnimationFrame(frame);
 				// setTimeout(requestAnimationFrame, 100, frame);
