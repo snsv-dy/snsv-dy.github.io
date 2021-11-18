@@ -21,6 +21,28 @@
 			var color = 0;
 			var keys = [];
 
+			const side_width = 35;
+			const side_height = 25;
+			const n_side_stripes = cw / side_width;
+			var side_stripe_x = 0;
+
+			const road_w = cw * 0.5;
+			const road_x = (cw - road_w) / 2;
+			const road_y = ch * 0.8;
+
+
+			const car_w = 110;
+			const car_h = 60;
+			var carx = car_w * 0.7;
+			var cary = road_y;
+			const car_speed = 800;
+
+			var carvy = 0;
+			var car_jump = false;
+			const gravity = 2000;
+
+			var speed = 100;
+
 			var starttime = null;
 
 			function frame(timestamp) {
@@ -32,8 +54,61 @@
 				var frameInc = (timestamp - starttime) / 1000;
 				starttime = timestamp;
 
-				// requestAnimationFrame(frame);
-				setTimeout(requestAnimationFrame, 100, frame);
+				handleKeys(frameInc);
+
+				if (carvy != 0)  {
+					if (carvy < 0 && !keys[32]) {
+						carvy = 0;
+					}
+
+					cary += carvy * frameInc;
+					carvy += gravity * frameInc;
+					if (cary >= road_y) {
+						cary = road_y;
+						carvy = 0;
+						car_jump = false;
+					}
+				}
+
+				// Drawing
+
+				c.clearRect(0, 0, cw, ch);
+				
+				// sky
+				c.beginPath();
+				c.rect(0, 0, cw, ch);
+				c.fillStyle = 'lightblue';
+				c.fill();
+
+				//ground
+				c.beginPath();
+				c.rect(0, road_y, cw, ch - road_y);
+				c.fillStyle = 'green';
+				c.fill();
+
+				// side lines 
+				let side_x = road_x - side_width;
+				for (var i = -5; i < n_side_stripes + 2; i++) {
+					c.beginPath();
+					c.rect(side_stripe_x + side_width * i, road_y, side_width, side_height);
+					// c.rect(side_x + road_w + side_width, side_stripe_x + side_height * i, side_width, side_height);
+					c.fillStyle = i % 2 == 0 ? 'white' : 'red';
+					c.fill();
+				}
+
+				side_stripe_x -= speed * frameInc;
+				if (side_stripe_x < side_width * 2) {
+					side_stripe_x %= side_width * 2;
+				}
+
+				// car
+				c.beginPath();
+				c.rect(carx, cary - car_h, car_w, car_h);
+				c.fillStyle = 'red';
+				c.fill();
+
+				requestAnimationFrame(frame);
+				// setTimeout(requestAnimationFrame, 100, frame);
 			}
 
 			requestAnimationFrame(frame);
@@ -45,6 +120,12 @@
 				//a - 65
 				//< - 37
 				// const speed = car_speed;
+
+				if (!car_jump && keys[32]) {
+					carvy -= car_speed;
+					car_jump = true;
+					console.log('jump');
+				}
 				
 			}
 
