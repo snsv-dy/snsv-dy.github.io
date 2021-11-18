@@ -37,6 +37,8 @@
 			var cary = road_y;
 			const car_speed = 600;
 
+			const wheel_r = 12;
+
 			var carvy = 0;
 			var car_jump = false;
 			const gravity = 700;
@@ -52,6 +54,43 @@
 			var obstacle_counter = 0;
 
 			var score = 0;
+			var boom = false;
+			
+			function restartGame() {
+				score = 0;
+				obstacles = [];
+				carvy = 0;
+				carx = car_w * 0.7;
+				cary = road_y;
+				speed = 500;
+				car_jump = false;
+
+				boom = false;
+				requestAnimationFrame(frame);
+			}
+
+			function displayEndGame() {
+				const w = cw * 0.6;
+				const h = ch * 0.2;
+				var x = (cw - w ) / 2;
+				var y = (ch - h ) / 2;
+
+				c.beginPath();
+				c.rect(x, y, w, h);
+				c.fillStyle = 'white';
+				c.stroke();
+				c.fill();
+
+				c.beginPath();
+				c.font = "20pt Arial";
+				c.fillStyle = 'black';
+				c.fillText("Koniec gry", cw / 2 - 60, y + 50);
+
+				c.beginPath();
+				c.font = "20pt Arial";
+				c.fillStyle = 'black';
+				c.fillText("Naciśnij enter aby zagrać ponownie", x + 20, y + 100);
+			}
 
 			function createObstacle() {
 				var width = obs_width * (Math.random() * obs_variable + (1.0 - obs_variable));
@@ -62,16 +101,17 @@
 			}
 
 			function carIntersect(r2) {
-				return !(r2[0] - r2[2] / 2 > (carx + car_w) || 
-						r2[0] + r2[2] / 2 < (carx) || 
-						r2[1] - r2[3] / 2 > (cary) ||
-						r2[1] + r2[3] / 2 < (cary - car_h));
+				return !(r2[0] > (carx + car_w) || 
+						r2[0] + r2[2] < (carx) || 
+						r2[1] > (cary) ||
+						r2[1] + r2[3] < (cary - car_h));
 			}
 
 			var starttime = null;
 
 			function frame(timestamp) {
 				
+				boom = false;
 				if (!starttime) {
 					 starttime = timestamp;
 				}
@@ -87,7 +127,7 @@
 
 					obstacle_counter = 0;
 				}
-				var boom = false;
+
 				for (var i = 0; i < obstacles.length; i++) {
 					obstacles[i][0] -= speed * frameInc;
 					var removeObs = false;
@@ -166,8 +206,15 @@
 
 				// car
 				c.beginPath();
-				c.rect(carx, cary - car_h, car_w, car_h);
+				c.rect(carx, cary - car_h - 10, car_w, car_h);
 				c.fillStyle = 'lime';
+				c.fill();
+
+				// wheels
+				c.beginPath();
+				c.arc(carx + car_w * 0.25, cary - wheel_r, wheel_r, 0, 2 * Math.PI, false);
+				c.arc(carx + car_w * 0.75, cary - wheel_r, wheel_r, 0, 2 * Math.PI, false);
+				c.fillStyle = 'black';
 				c.fill();
 
 				// score
@@ -181,9 +228,11 @@
 					c.font = '20pt Arial';
 					c.fillStyle = 'black';
 					c.fillText(`Boom`, 10, 50);
+					displayEndGame();
+				} else {
+					requestAnimationFrame(frame);
 				}
 
-				requestAnimationFrame(frame);
 				// setTimeout(requestAnimationFrame, 100, frame);
 			}
 
@@ -202,6 +251,10 @@
 					car_jump = true;
 					console.log('jump');
 				}
+
+				// if (boom && keys[13]) {
+				// 	restartGame();
+				// }
 				
 			}
 
@@ -216,6 +269,9 @@
 
 			function keyDown(e) {
 				keys[e.keyCode] = true;
+				if (boom && e.keyCode == 13) {
+					restartGame();
+				}
 			}
 		</script>
 	</body>
