@@ -13,9 +13,15 @@
 		<canvas width="800" height="600" style="border: 1px solid green;"></canvas>
 		<audio src="gun.mp3" id="gun" style="display: none;"></audio>
 		<audio src="booom.mp3" id="booom" style="display: none;"></audio>
+		<img src="ca.png" id="carleft" style="display: none;">
+		<img src="caa.png" id="carright" style="display: none;">
 		<script>
 			var gun = document.getElementById("gun");
 			var booom = document.getElementById("booom");
+
+			var carimage = document.getElementById("carright");
+			var obstacleimage = document.getElementById("carleft");
+
 			var canvas = document.querySelector('canvas');
 			var c = canvas.getContext('2d');
 
@@ -325,8 +331,9 @@
 				c.fillStyle = 'blue';
 				for (let o of obstacles) {
 					c.beginPath();
-					c.rect(o[0], o[1], o[2], o[3]);
-					c.fill();
+					c.drawImage(obstacleimage, o[0], o[1], o[2], o[3]);
+					// c.rect(o[0], o[1], o[2], o[3]);
+					// c.fill();
 				}
 
 				var bulleti = 0;
@@ -345,16 +352,17 @@
 
 				// car
 				c.beginPath();
-				c.rect(carx, cary - car_h - 10, car_w, car_h);
-				c.fillStyle = 'lime';
-				c.fill();
+				c.drawImage(carimage, carx - 30, cary - car_h - 10 - 20, car_w + 60, car_h + 40);
+				// c.rect(carx, cary - car_h - 10, car_w, car_h);
+				// c.fillStyle = 'lime';
+				// c.fill();
 
 				// wheels
-				c.beginPath();
-				c.arc(carx + car_w * 0.25, cary - wheel_r, wheel_r, 0, 2 * Math.PI, false);
-				c.arc(carx + car_w * 0.75, cary - wheel_r, wheel_r, 0, 2 * Math.PI, false);
-				c.fillStyle = 'black';
-				c.fill();
+				// c.beginPath();
+				// c.arc(carx + car_w * 0.25, cary - wheel_r, wheel_r, 0, 2 * Math.PI, false);
+				// c.arc(carx + car_w * 0.75, cary - wheel_r, wheel_r, 0, 2 * Math.PI, false);
+				// c.fillStyle = 'black';
+				// c.fill();
 
 				// particles
 				for (p of particles) {
@@ -374,8 +382,8 @@
 					c.fillText(`Boom`, 10, 50);
 					displayEndGame();
 				} else {
-					setTimeout(requestAnimationFrame, 100, frame);
-					// requestAnimationFrame(frame);
+					// setTimeout(requestAnimationFrame, 100, frame);
+					requestAnimationFrame(frame);
 				}
 
 			}
