@@ -15,12 +15,14 @@
 		<audio src="booom.mp3" id="booom" style="display: none;"></audio>
 		<img src="ca.png" id="carleft" style="display: none;">
 		<img src="caa.png" id="carright" style="display: none;">
+		<img src="bulet.png" id="bulet" style="display: none;">
 		<script>
 			var gun = document.getElementById("gun");
 			var booom = document.getElementById("booom");
 
 			var carimage = document.getElementById("carright");
 			var obstacleimage = document.getElementById("carleft");
+			var bulletimage = document.getElementById("bulet");
 
 			var canvas = document.querySelector('canvas');
 			var c = canvas.getContext('2d');
@@ -342,9 +344,11 @@
 					var bullety = bullet[1];
 
 					c.beginPath();
-					c.arc(bulletx, bullety, bulletr, 0, 2*Math.PI, false);
-					c.fillStyle = 'green';
-					c.fill();
+					const bulletscale = 0.2;
+					c.drawImage(bulletimage, bulletx - bulletimage.width * bulletscale / 2, bullety - bulletimage.height * bulletscale / 2, bulletimage.width * bulletscale, bulletimage.height * bulletscale);
+					// c.arc(bulletx, bullety, bulletr, 0, 2*Math.PI, false);
+					// c.fillStyle = 'green';
+					// c.fill();
 
 					bullet[0] += bulletspeed * frameInc;
 					bulleti++;
