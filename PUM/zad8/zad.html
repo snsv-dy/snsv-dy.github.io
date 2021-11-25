@@ -1,0 +1,278 @@
+<!-- 
+1. Proszę opracować widok z boku (analogicznie do Jump Car z Androida)
+2. Samochód jedzie po białoczerwonym pasie drogi 
+3. Skaczemy korzystając ze spacji.
+4. Pojawiają się przeszkody, przez które przeskakujemy. 
+-->
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+	</head>
+	<body>
+		<canvas width="800" height="600" style="border: 1px solid green;"></canvas>
+		<script>
+			var canvas = document.querySelector('canvas');
+			var c = canvas.getContext('2d');
+
+			var cw = canvas.width;
+			var ch = canvas.height;
+			var r = 50;
+			var color = 0;
+			var keys = [];
+
+			const side_width = 35;
+			const side_height = 25;
+			const n_side_stripes = cw / side_width;
+			var side_stripe_x = 0;
+
+			const road_w = cw * 0.5;
+			const road_x = (cw - road_w) / 2;
+			const road_y = ch * 0.8;
+
+
+			const car_w = 110;
+			const car_h = 60;
+			var carx = car_w * 0.7;
+			var cary = road_y;
+			const car_speed = 600;
+
+			const wheel_r = 12;
+
+			var carvy = 0;
+			var car_jump = false;
+			const gravity = 700;
+
+			var speed = 500;
+
+			var obstacles = [];
+			const obs_width = 130;
+			const obs_height = 70;
+			const obs_variable = 0.3;
+
+			const obstacle_delay = 6;
+			var obstacle_counter = 0;
+
+			var score = 0;
+			var boom = false;
+			
+			function restartGame() {
+				score = 0;
+				obstacles = [];
+				carvy = 0;
+				carx = car_w * 0.7;
+				cary = road_y;
+				speed = 500;
+				car_jump = false;
+
+				boom = false;
+				requestAnimationFrame(frame);
+			}
+
+			function displayEndGame() {
+				const w = cw * 0.6;
+				const h = ch * 0.2;
+				var x = (cw - w ) / 2;
+				var y = (ch - h ) / 2;
+
+				c.beginPath();
+				c.rect(x, y, w, h);
+				c.fillStyle = 'white';
+				c.stroke();
+				c.fill();
+
+				c.beginPath();
+				c.font = "20pt Arial";
+				c.fillStyle = 'black';
+				c.fillText("Koniec gry", cw / 2 - 60, y + 50);
+
+				c.beginPath();
+				c.font = "20pt Arial";
+				c.fillStyle = 'black';
+				c.fillText("Naciśnij enter aby zagrać ponownie", x + 20, y + 100);
+			}
+
+			function createObstacle() {
+				var width = obs_width * (Math.random() * obs_variable + (1.0 - obs_variable));
+				var height = obs_height * (Math.random() * obs_variable + (1.0 - obs_variable));
+				
+				var t = [cw + width, road_y - height, width, height];
+				obstacles.push(t);
+			}
+
+			function carIntersect(r2) {
+				return !(r2[0] > (carx + car_w) || 
+						r2[0] + r2[2] < (carx) || 
+						r2[1] > (cary) ||
+						r2[1] + r2[3] < (cary - car_h));
+			}
+
+			var starttime = null;
+
+			function frame(timestamp) {
+				
+				boom = false;
+				if (!starttime) {
+					 starttime = timestamp;
+				}
+
+				var frameInc = (timestamp - starttime) / 1000;
+				starttime = timestamp;
+
+				handleKeys(frameInc);
+
+				obstacle_counter += frameInc;
+				if (obstacle_counter >= obstacle_delay * 100 / speed) {
+					createObstacle();
+
+					obstacle_counter = 0;
+				}
+
+				for (var i = 0; i < obstacles.length; i++) {
+					obstacles[i][0] -= speed * frameInc;
+					var removeObs = false;
+					if (obstacles[i][0] < -obstacles[i][2]) {
+						removeObs = true;
+					} else {
+						if (carIntersect(obstacles[i])) {
+						// 	obstacles[i][4] == OBSTACLE ? obstacles_crashed++ : bonuses_collected++;
+						// 	// cary += speed * frameInc;
+						// 	removeObs = true;
+							console.log('boom');
+							boom = true;
+						}
+					}
+
+					if (removeObs) {
+						score++;
+						obstacles.splice(i, 1);
+						if (i < obstacles.length - 1)
+							i--;
+					}
+				}
+
+				if (carvy != 0)  {
+					if (carvy < 0 && !keys[32]) {
+						carvy = 0;
+					}
+
+					cary += carvy * frameInc;
+					carvy += gravity * frameInc;
+					if (cary >= road_y) {
+						cary = road_y;
+						carvy = 0;
+						car_jump = false;
+					}
+				}
+
+				// Drawing
+
+				c.clearRect(0, 0, cw, ch);
+				
+				// sky
+				c.beginPath();
+				c.rect(0, 0, cw, ch);
+				c.fillStyle = 'lightblue';
+				c.fill();
+
+				//ground
+				c.beginPath();
+				c.rect(0, road_y, cw, ch - road_y);
+				c.fillStyle = 'green';
+				c.fill();
+
+				// side lines 
+				let side_x = road_x - side_width;
+				for (var i = -5; i < n_side_stripes + 2; i++) {
+					c.beginPath();
+					c.rect(side_stripe_x + side_width * i, road_y, side_width, side_height);
+					// c.rect(side_x + road_w + side_width, side_stripe_x + side_height * i, side_width, side_height);
+					c.fillStyle = i % 2 == 0 ? 'white' : 'red';
+					c.fill();
+				}
+
+				side_stripe_x -= speed * frameInc;
+				if (side_stripe_x < side_width * 2) {
+					side_stripe_x %= side_width * 2;
+				}
+
+				// obstacles
+				c.fillStyle = 'blue';
+				for (let o of obstacles) {
+					c.beginPath();
+					c.rect(o[0], o[1], o[2], o[3]);
+					c.fill();
+				}
+
+				// car
+				c.beginPath();
+				c.rect(carx, cary - car_h - 10, car_w, car_h);
+				c.fillStyle = 'lime';
+				c.fill();
+
+				// wheels
+				c.beginPath();
+				c.arc(carx + car_w * 0.25, cary - wheel_r, wheel_r, 0, 2 * Math.PI, false);
+				c.arc(carx + car_w * 0.75, cary - wheel_r, wheel_r, 0, 2 * Math.PI, false);
+				c.fillStyle = 'black';
+				c.fill();
+
+				// score
+				c.beginPath();
+				c.font = '20pt Arial';
+				c.fillStyle = 'black';
+				c.fillText(`Wynik: ${score}`, 10, 30);
+
+				if (boom) {
+					c.beginPath();
+					c.font = '20pt Arial';
+					c.fillStyle = 'black';
+					c.fillText(`Boom`, 10, 50);
+					displayEndGame();
+				} else {
+					requestAnimationFrame(frame);
+				}
+
+				// setTimeout(requestAnimationFrame, 100, frame);
+			}
+
+			requestAnimationFrame(frame);
+
+			function handleKeys(dt) {
+				//d - 68
+				//> - 39
+
+				//a - 65
+				//< - 37
+				// const speed = car_speed;
+
+				if (!car_jump && keys[32]) {
+					carvy -= car_speed;
+					car_jump = true;
+					console.log('jump');
+				}
+
+				// if (boom && keys[13]) {
+				// 	restartGame();
+				// }
+				
+			}
+
+
+
+			document.body.addEventListener('keyup', keyUp);
+			document.body.addEventListener('keydown', keyDown);
+
+			function keyUp(e) {
+				keys[e.keyCode] = false;
+			}
+
+			function keyDown(e) {
+				keys[e.keyCode] = true;
+				if (boom && e.keyCode == 13) {
+					restartGame();
+				}
+			}
+		</script>
+	</body>
+</html>
