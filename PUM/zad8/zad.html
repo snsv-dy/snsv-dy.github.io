@@ -11,7 +11,11 @@
 	</head>
 	<body>
 		<canvas width="800" height="600" style="border: 1px solid green;"></canvas>
+		<audio src="gun.mp3" id="gun" style="display: none;"></audio>
+		<audio src="booom.mp3" id="booom" style="display: none;"></audio>
 		<script>
+			var gun = document.getElementById("gun");
+			var booom = document.getElementById("booom");
 			var canvas = document.querySelector('canvas');
 			var c = canvas.getContext('2d');
 
@@ -71,6 +75,7 @@
 				cary = road_y;
 				speed = 500;
 				car_jump = false;
+				shootDelayCount = -1;
 
 				boom = false;
 				requestAnimationFrame(frame);
@@ -99,6 +104,65 @@
 				c.fillText("Naciśnij enter aby zagrać ponownie", x + 20, y + 100);
 			}
 
+
+			var particles = [];
+
+			function explodeParticle(x, y, vx, vy) {
+				this.x = x;
+				this.y = y;
+				this.vx = vx;
+				this.vy = vy;
+
+				this.age = 0;
+				const maxage = 1;
+				this.r = 30 * (Math.random() * 0.4 + 0.6);
+				this.color = parseInt(60 * Math.random());
+
+				const speed_inc = 200 * (Math.random() * 0.4 + 0.6);
+
+				var p = this;
+				this.update = function(timestamp) {
+					this.y += p.vy * timestamp * speed_inc;
+					this.x -= (p.vx * speed_inc + speed) * timestamp;
+					this.age += timestamp;
+
+					return p.age >= maxage;
+				}
+
+				this.draw = function() {
+					var age_frac = 1 - (p.age / maxage);
+					c.beginPath();
+					c.arc(p.x, p.y, p.r * age_frac, 0, 2 * Math.PI, false);
+					c.fillStyle = `hsl(${p.color}, ${100 * age_frac}%, 50%)`;
+					c.fill();
+				}
+			}
+
+			function rotatePoint(x, y, angle) {
+				var sinv = Math.sin(angle);
+				var cosv = Math.cos(angle);
+				return [
+					cosv*x - sinv*y,
+					sinv*x + cosv*y
+				];
+			}
+
+			function createExplosion(x, y) {
+				const npartices = 15;
+				const angle = 2 * Math.PI / npartices;
+				
+				for (var i = 0; i < npartices; i++) {
+					var rand = Math.random() * 0.2 - 0.1;
+					var vel = rotatePoint(rand, -1 + rand, angle * i + rand);
+					particles.push(new explodeParticle(x, y, vel[0], vel[1]));
+				}
+
+				if (booom.currentTime / booom.duration > 0.3 || booom.currentTime == 0) {
+					booom.currentTime = 0;
+					booom.play();
+				}
+			}
+
 			function createObstacle() {
 				var width = obs_width * (Math.random() * obs_variable + (1.0 - obs_variable));
 				var height = obs_height * (Math.random() * obs_variable + (1.0 - obs_variable));
@@ -114,6 +178,15 @@
 						r2[1] + r2[3] < (cary - car_h));
 			}
 
+			function bulletIntersects(b, o) {
+				return !(o[0]> (b[0] + bulletr) || 
+					o[0] + o[2] < (b[0] - bulletr) || 
+					o[1] > (b[1] + bulletr) ||
+					o[1] + o[3] < (b[1] - bulletr));
+				// return (b[1] - bulletr > o[1] - o[3] / 2) ||
+
+			}
+
 			var starttime = null;
 
 			function frame(timestamp) {
@@ -125,6 +198,20 @@
 
 				var frameInc = (timestamp - starttime) / 1000;
 				starttime = timestamp;
+
+				// Shooting
+				if (shootDelayCount >= 0) {
+					shootDelayCount -= frameInc;
+				}
+
+				for (var i = 0; i < particles.length; ) {
+					let p = particles[i];
+					if (p.update(frameInc)) {
+						particles.splice(i, 1);
+					} else {
+						i++;
+					}
+				}
 
 				handleKeys(frameInc);
 
@@ -144,12 +231,12 @@
 						if (obstacles[i][0] > cw) {
 							removeObs = true;
 						} else {
-							// if (bulletIntersects(bullet, obstacles[i]) || 
-							// bulletIntersects([bulletx, bullety - bulletspeed * frameInc / 2], obstacles[i])) {
-							// 	createExplosion(obstacles[i][0], obstacles[i][1])
-							// 	obstacles.splice(i, 1);
-							// 	bullets.splice(bulleti, 1);
-							// }
+							if (bulletIntersects(bullet, obstacles[i]) || 
+							bulletIntersects([bulletx, bullety - bulletspeed * frameInc / 2], obstacles[i])) {
+								createExplosion(obstacles[i][0], obstacles[i][1])
+								obstacles.splice(i, 1);
+								bullets.splice(bulleti, 1);
+							}
 						}
 					}
 
@@ -269,6 +356,11 @@
 				c.fillStyle = 'black';
 				c.fill();
 
+				// particles
+				for (p of particles) {
+					p.draw();
+				}
+
 				// score
 				c.beginPath();
 				c.font = '20pt Arial';
@@ -309,6 +401,10 @@
 					console.log("bullez");
 					bullets.push([carx + car_w - bulletr, cary - car_h / 2]);
 					shootDelayCount = shootDelay;
+					if (gun.currentTime / gun.duration > 0.15 || gun.currentTime == 0) {
+						gun.currentTime = 0;
+						gun.play();
+					}
 				}
 
 				// if (boom && keys[13]) {
