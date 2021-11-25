@@ -1,8 +1,8 @@
 <!-- 
-1. Proszę opracować widok z boku (analogicznie do Jump Car z Androida)
-2. Samochód jedzie po białoczerwonym pasie drogi 
-3. Skaczemy korzystając ze spacji.
-4. Pojawiają się przeszkody, przez które przeskakujemy. 
+1. Proszę poprawić błędy z zadania 4
+2. Popracować nad grafikami
+3. Dodać strzelanie.
+4. Dodać dźwięk strzelania.
 -->
 <!DOCTYPE html>
 <html>
@@ -44,6 +44,13 @@
 			const gravity = 700;
 
 			var speed = 500;
+			
+			var shootDelay = 0.2;
+			var shootDelayCount = -1;
+
+			var bulletr = 5;
+			var bulletspeed = 450;
+			var bullets = [];
 
 			var obstacles = [];
 			const obs_width = 130;
@@ -120,6 +127,37 @@
 				starttime = timestamp;
 
 				handleKeys(frameInc);
+
+				// bullets
+				var bulleti = 0;
+				for (let bullet of bullets) {
+					var bulletx = bullet[0];
+					var bullety = bullet[1];
+
+					if (bulletx + bulletr > cw) {
+						bullets.splice(bulleti, 1);
+					}
+
+					var hit = false;
+					for (var i = 0; i < obstacles.length; i++) {
+						var removeObs = false;
+						if (obstacles[i][0] > cw) {
+							removeObs = true;
+						} else {
+							// if (bulletIntersects(bullet, obstacles[i]) || 
+							// bulletIntersects([bulletx, bullety - bulletspeed * frameInc / 2], obstacles[i])) {
+							// 	createExplosion(obstacles[i][0], obstacles[i][1])
+							// 	obstacles.splice(i, 1);
+							// 	bullets.splice(bulleti, 1);
+							// }
+						}
+					}
+
+					if (!hit) {
+						bullet[0] += bulletspeed * frameInc;
+						bulleti++;
+					}
+				}
 
 				obstacle_counter += frameInc;
 				if (obstacle_counter >= obstacle_delay * 100 / speed) {
@@ -204,6 +242,20 @@
 					c.fill();
 				}
 
+				var bulleti = 0;
+				for (let bullet of bullets) {
+					var bulletx = bullet[0];
+					var bullety = bullet[1];
+
+					c.beginPath();
+					c.arc(bulletx, bullety, bulletr, 0, 2*Math.PI, false);
+					c.fillStyle = 'green';
+					c.fill();
+
+					bullet[0] += bulletspeed * frameInc;
+					bulleti++;
+				}
+
 				// car
 				c.beginPath();
 				c.rect(carx, cary - car_h - 10, car_w, car_h);
@@ -230,10 +282,10 @@
 					c.fillText(`Boom`, 10, 50);
 					displayEndGame();
 				} else {
-					requestAnimationFrame(frame);
+					setTimeout(requestAnimationFrame, 100, frame);
+					// requestAnimationFrame(frame);
 				}
 
-				// setTimeout(requestAnimationFrame, 100, frame);
 			}
 
 			requestAnimationFrame(frame);
@@ -250,6 +302,13 @@
 					carvy -= car_speed;
 					car_jump = true;
 					console.log('jump');
+				}
+
+				if (keys[67] && shootDelayCount < 0) {
+					// Shoot
+					console.log("bullez");
+					bullets.push([carx + car_w - bulletr, cary - car_h / 2]);
+					shootDelayCount = shootDelay;
 				}
 
 				// if (boom && keys[13]) {
