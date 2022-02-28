@@ -1,0 +1,32 @@
+<html>
+	<head>
+		
+	</head>
+	<body>
+		<form>
+			<!-- <label for="email"> -->
+				Email: 
+			<!-- </label> -->
+			<input type="email" name="email"placeholder="user@site.com" required><br>
+			<!-- <label for="email"> -->
+				Kod pocztowy: 
+			<!-- </label> -->
+			<input type="text" name="postal" pattern="\d\d-\d\d\d" title="2 cyfry myślnik i 3 cyfry" placeholder="12-345" required> <br>
+			Numer nip: 
+			<input type="text" name="nip" pattern="\d{3}-\d{3}-\d{2}-\d{2}" placeholder="123-456-32-18" required> <br>
+			Numer dowodu: 
+			<input type="text" name="dowod" pattern="[A-Z]{3}\d{6}" placeholder="ABA300000" required> <br>
+			Adres ipv4: 
+			<input type="text" name="ip" pattern="\b((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}\b" placeholder="192.168.1.1" required> <br>
+			Strona www:
+			<input type="text" name="www" pattern="(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})" placeholder="www.example.com" required> <br>
+			Ścieżka dysku: 
+			<input type="text" name="windir" pattern="[a-zA-Z]:(\\[a-z]+)+" placeholder="c:\windows\user" required> <br>
+			Ścieżka dysku: 
+			<input type="text" name="windirbig" pattern="[a-zA-Z]:(\\[A-Za-z]+)+" placeholder="c:\WinDows\user" required> <br>
+			Ścieżka do pliku w katalogu /etc: 
+			<input type="text" name="windirbig" pattern="[a-zA-Z]:(\\[A-Za-z]+)+" placeholder="c:\WinDows\user" required> <br>
+			<input type="submit">
+		</form>
+	</body>
+</html>
