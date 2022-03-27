@@ -1,0 +1,242 @@
+<html>
+	<head>
+	<meta charset="utf-8">
+	<style>
+		body{
+			margin: 0;
+			padding: 0;
+		}
+		.button {
+			/* text-align: center; */
+			border: 0;
+			background: lime;
+			width: 20%;
+			height: 100%;
+			display: block;
+			float: left;
+		}
+
+		.area {
+			background: green;
+			width: 80%;
+			height: 100%;
+			display: block;
+			float: left;
+		}
+
+		#gen_box {
+			padding: 15px;
+			font-size: 15pt;
+			position: relative;
+			top: 50%;
+		}
+
+		.drag_box {
+			/* background: red; */
+			width: 100px;
+			height: 100px;
+			display: block;
+			position: absolute;
+		}
+	</style>
+	</head>
+	<body>
+		<div class="area">
+			<!-- <div class="drag_box" id="e1"></div>
+			<div class="drag_box" style="background: green;" id="e2"></div> -->
+		</div>
+		<div class="button">
+			<button id="gen_box" onclick="addBox()">Generuj klocek</button>
+			<button id="gen_box" onclick="addTri()">Generuj trójkąt</button>
+			<button id="gen_box" onclick="addCirc()">Generuj koło</button>
+		</div>
+	</body>
+	<script>
+		var area = document.querySelector('.area');
+
+		function rectIntersect(rect2, rect1) {
+			// if (rect1[0] < rect2[0] + rect2[2] &&
+			// 	rect1[0] + rect1[2] > rect2[0] &&
+			// 	rect1[1] < rect2[1] + rect2[3] &&
+			// 	rect1[3] + rect1[1] > rect2[1]) {
+			// 		return true;
+			// 	}
+			if ((rect1[0] < (rect2[0] + rect2[2])) &&
+				((rect1[0] + rect1[2]) > rect2[0]) &&
+				(rect1[1] < (rect2[1] + rect2[3])) &&
+				((rect1[1] + rect1[3]) > rect2[1])) {
+				return true;
+			}
+			return false;
+		}
+
+		var boxes = [];
+
+		function addBox() {
+			var box = document.createElement('div');
+			box.classList.add('drag_box');	
+			box.style.backgroundColor = `hsl(${parseInt(Math.random() * 360)}, 100%, 50%)`;
+			var bx = [
+				Math.random() * 450 + area.offsetWidth / 2,
+				Math.random() * 450 + area.offsetHeight / 2,
+				100, 100
+			];
+
+			box.style.top = bx[0];
+			box.style.left = bx[1];
+			boxes.push({elem: box, dims: bx});
+			// box.style.backgroundColor = 'hsl(240, 50%, 50%)';
+			area.appendChild(box);
+			dragElement(box);
+		}
+
+		function addCirc() {
+			var box = document.createElement('div');
+			var color = `hsl(${parseInt(Math.random() * 360)}, 100%, 50%)`;
+			box.innerHTML = `<svg height="100" width="100">
+  <circle cx="50" cy="50" r="50" stroke-width="3" fill="${color}" />
+</svg>`;
+			box.classList.add('drag_box');	
+			// box.style.backgroundColor = 'red';
+			var bx = [
+				Math.random() * 450 + area.offsetWidth / 2,
+				Math.random() * 450 + area.offsetHeight / 2,
+				100, 100
+			];
+
+			box.style.top = bx[0];
+			box.style.left = bx[1];
+			boxes.push({elem: box, dims: bx});
+			// box.style.backgroundColor = 'hsl(240, 50%, 50%)';
+			area.appendChild(box);
+			dragElement(box);
+		}
+
+		function addTri() {
+			var box = document.createElement('div');
+			var color = `hsl(${parseInt(Math.random() * 360)}, 100%, 50%)`;
+			box.innerHTML = ` <svg height="100" width="100">
+  <polygon points="0,100 50,0 100,100" style="fill:${color}" />
+</svg> `;
+			box.classList.add('drag_box');	
+			// box.style.backgroundColor = 'red';
+			var bx = [
+				Math.random() * 450 + area.offsetWidth / 2,
+				Math.random() * 450 + area.offsetHeight / 2,
+				100, 100
+			];
+
+			box.style.top = bx[0];
+			box.style.left = bx[1];
+			boxes.push({elem: box, dims: bx});
+			// box.style.backgroundColor = 'hsl(240, 50%, 50%)';
+			area.appendChild(box);
+			dragElement(box);
+		}
+
+		// Make the DIV element draggable:
+		// dragElement(document.getElementById("e1"));
+		// dragElement(document.getElementById("e2"));
+
+		function dragElement(elmnt) {
+			var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+			elmnt.onmousedown = dragMouseDown;
+
+			function dragMouseDown(e) {
+				e = e || window.event;
+				e.preventDefault();
+				// get the mouse cursor position at startup:
+				pos3 = e.clientX;
+				pos4 = e.clientY;
+				document.onmouseup = closeDragElement;
+				// call a function whenever the cursor moves:
+				document.onmousemove = elementDrag;
+			}
+
+			function elementDrag(e) {
+				e = e || window.event;
+				e.preventDefault();
+				// calculate the new cursor position:
+				pos1 = pos3 - e.clientX;
+				pos2 = pos4 - e.clientY;
+				pos3 = e.clientX;
+				pos4 = e.clientY;
+				var thisbox = null;
+				var boxi = 0;
+				for (let b of boxes) {
+					// console.log("box", b.elem, elmnt, b.elem == elmnt);
+					if (b.elem == elmnt) {
+						thisbox = b;
+						break;
+					}
+					boxi++;
+				}
+
+				var collided_with = null;
+				if (thisbox != null) {
+					var collided = false;
+					for (let b of boxes) {
+						if (b.elem != elmnt) {
+							if (rectIntersect(thisbox.dims, b.dims)) {
+								collided = true;
+								console.log("collided");
+								collided_with = b;
+								break;
+							} else {
+								console.log(`boxi ${boxi} ${b.dims[0]} ${b.dims[1]} ${b.dims[2]} ${b.dims[3]}`);
+							}
+						} else {
+							// console.log("SAME");
+						}
+					}
+
+						elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+						elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+						boxes[boxi].dims[0] = parseFloat(elmnt.offsetLeft - pos1);
+						boxes[boxi].dims[1] = parseFloat(elmnt.offsetTop - pos2);
+						// set the element's new position:
+					if (!collided) {
+						elmnt.style.border = "0px";
+						// elmnt.innerHTML = "";
+					} else {
+						// elmnt.style.border = "1px solid white";
+						var tx = boxes[boxi].dims[0];
+						var ox = collided_with.dims[0];
+						var xdiff = boxes[boxi].dims[0] - collided_with.dims[0];
+						if (tx < ox ) {
+							xdiff += 100;
+						} else {
+							xdiff -= 100;
+						}
+						var ty = boxes[boxi].dims[1];
+						var oy = collided_with.dims[1];
+						var ydiff = boxes[boxi].dims[1] - collided_with.dims[1];
+						if (ty < oy ) {
+							ydiff += 100;
+						} else {
+							ydiff -= 100;
+						}
+
+						if (Math.abs(xdiff) < Math.abs(ydiff)) {
+							elmnt.style.left = (elmnt.offsetLeft - pos1 - xdiff) + "px";
+							boxes[boxi].dims[0] = parseFloat(elmnt.offsetLeft - pos1 - xdiff);
+						} else {
+							elmnt.style.top = (elmnt.offsetTop - pos2 - ydiff) + "px";
+							boxes[boxi].dims[1] = parseFloat(elmnt.offsetTop - pos2 - ydiff);
+						}
+
+						// elmnt.innerHTML = xdiff + ", " + ydiff;
+					}
+				} else {
+					console.log("thisbox == null");
+				}
+			}
+
+			function closeDragElement() {
+				// stop moving when mouse button is released:
+				document.onmouseup = null;
+				document.onmousemove = null;
+			}
+		}
+	</script>
+</html>
