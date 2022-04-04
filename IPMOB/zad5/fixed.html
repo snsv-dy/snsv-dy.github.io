@@ -72,13 +72,17 @@
 		}
 
 		var boxes = [];
+		var button_area_dims = button_area.getBoundingClientRect();
 
 		function addBox() {
-			var button_area_dims = button_area.getBoundingClientRect();
-
 			var box = document.createElement('div');
 			box.classList.add('drag_box');	
-			box.style.backgroundColor = `hsl(${parseInt(Math.random() * 360)}, 100%, 50%)`;
+			var color = `hsl(${parseInt(Math.random() * 360)}, 100%, 50%)`;
+			box.innerHTML = `<svg width="100" height="100"><polygon
+   points="40,198 190,78 10,78 160,198 100,10 "
+   style="fill:${color};fill-rule:nonzero;stroke:#800080;stroke-width:0"
+   id="polygon3904"
+   transform="matrix(0.51571331,0,0,0.4908587,-1.6935804,-0.78327864)" /></svg>`;
 			var bx = [
 				button_area_dims.x + (button_area_dims.width - 100) / 2,
 				button_area_dims.y + 100,
@@ -93,29 +97,40 @@
 			dragElement(box);
 		}
 
-		function addCirc() {
+		function addTri() {
 			var box = document.createElement('div');
 			var color = `hsl(${parseInt(Math.random() * 360)}, 100%, 50%)`;
 			box.innerHTML = `<svg height="100" width="100">
-  <circle cx="50" cy="50" r="50" stroke-width="3" fill="${color}" />
+				<g
+   id="g95"
+   transform="matrix(0.23148066,0,0,0.19738816,194.67192,-203.308)">
+	<g
+   id="g93"
+   transform="translate(-876.70106,1030.8099)">
+		<path
+   d="m 465.411,427.184 c -94.332,-1.536 -171.076,-79.532 -171.076,-173.876 0,-94.344 76.748,-172.34 171.08,-173.872 1.592,-0.02 3.02,-1.004 3.612,-2.488 0.588,-1.484 0.24,-3.176 -0.904,-4.292 C 420.447,25.804 357.403,0 290.615,0 150.939,0 37.307,113.632 37.307,253.308 c 0,139.68 113.632,253.308 253.308,253.308 66.788,0 129.832,-25.804 177.508,-72.66 1.14,-1.116 1.492,-2.808 0.904,-4.288 -0.596,-1.484 -2.02,-2.464 -3.616,-2.484 z"
+   id="path91"
+   inkscape:connector-curvature="0" style="fill: ${color}"/>
+	</g>
+</g>
 </svg>`;
 			box.classList.add('drag_box');	
 			// box.style.backgroundColor = 'red';
 			var bx = [
-				Math.random() * 450 + area.offsetWidth / 2,
-				Math.random() * 450 + area.offsetHeight / 2,
+				button_area_dims.x + (button_area_dims.width - 100) / 2,
+				button_area_dims.y + 100,
 				100, 100
 			];
 
-			box.style.top = bx[0];
-			box.style.left = bx[1];
+			box.style.left = bx[0];
+			box.style.top = bx[1];
 			boxes.push({elem: box, dims: bx});
 			// box.style.backgroundColor = 'hsl(240, 50%, 50%)';
 			area.appendChild(box);
 			dragElement(box);
 		}
 
-		function addTri() {
+		function addTria() {
 			var box = document.createElement('div');
 			var color = `hsl(${parseInt(Math.random() * 360)}, 100%, 50%)`;
 			box.innerHTML = ` <svg height="100" width="100">
