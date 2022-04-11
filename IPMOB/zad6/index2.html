@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+			ol {
+
+			}
+		</style>
+	</head>
+	<body>
+		<ol contenteditable="true" input="test2">
+			<li draggable="true">test1</li>
+			<li draggable="true">test2</li>
+			<li draggable="true">test3</li>
+		</ol>
+
+		<script>
+			var list_counter = 0;
+			var ul = document.querySelector('ol');
+			ul.addEventListener('input', function(e) {
+				refreshChildren();
+				// console.log("ehe", e);
+			});
+			var dragged_element = null;
+
+			function refreshChildren() {
+				for (let e of ul.children) {
+					e.id = "elem_" + list_counter.toString();
+					list_counter++;
+					makeDraggable(e);
+				}
+			}
+			refreshChildren();
+			
+			function dragstart(event) {
+				event.dataTransfer.setData('text/plain', event.target.id);
+				event.target.style.backgroundColor = 'yellow';
+				dragged_element = event.target;
+			}
+			
+			function dragover(event) {
+				event.preventDefault();
+				event.target.style.background = 'pink';
+			}
+			function dragleave(event) {
+				event.preventDefault();
+				event.target.style.background = 'none';
+			}
+
+			function dropp(event) {
+    			event.preventDefault();
+				console.log("dropped");
+				let dropzone = event.target;
+				event.target.style.background = 'none';
+				dragged_element.style.background = 'none';
+				var temp = event.target.innerHTML + "";
+				ul.insertBefore(dragged_element, event.target.nextSibling);
+				ul.insertBefore(event.target.nextSibling, dragged_element);
+				
+				dragged_element = null;
+				event.dataTransfer.clearData();
+				console.log("dropped");
+			}
+
+			function makeDraggable(element) {
+				element.addEventListener('dragstart', dragstart);
+				element.addEventListener('drop', dropp);
+				element.addEventListener('dragover', dragover);
+				element.addEventListener('dragleave', dragleave);
+				element.setAttribute('draggable', true);
+			}
+		</script>
+	</body>
+</html>
