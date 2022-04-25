@@ -1,0 +1,253 @@
+<html>
+	<head>
+		<style>
+			input:invalid {
+				border-color: red;
+			}
+			input:required:valid {
+				border-color: green;
+			}
+
+			form > div >* {
+				margin-bottom: 5px;
+				padding: 5px;
+			}
+			.removable_field {
+				/* margin-bottom: 5px; */
+			}
+		</style>
+	</head>
+	<body>
+		<form>
+			<div class="removable_field">	
+				Email: 
+				<input type="email" name="email"placeholder="user@site.com" required>
+				<button onclick="removethis(event)">X</button>
+				<br>
+			</div>
+			<div class="removable_field">
+				Kod pocztowy: 
+				<input type="text" name="postal" pattern="\d\d-\d\d\d" title="2 cyfry myślnik i 3 cyfry" placeholder="12-345" required> 
+				<button onclick="removethis(event)">X</button>
+				<br>
+			</div>
+			<div class="removable_field">
+				Numer nip: 
+				<input type="text" name="nip" pattern="\d{3}-\d{3}-\d{2}-\d{2}" placeholder="123-456-32-18" required> 
+				<button onclick="removethis(event)">X</button>
+				<br>
+			</div>
+			<div class="removable_field">
+				Numer dowodu: 
+				<input type="text" name="dowod" pattern="[A-Z]{3}\d{6}" placeholder="ABA300000" required> 
+				<button onclick="removethis(event)">X</button>
+				<br>
+			</div>
+			<div class="removable_field">
+				Adres ipv4: 
+				<input type="text" name="ip" pattern="\b((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}\b" placeholder="192.168.1.1" required> 
+				<button onclick="removethis(event)">X</button>
+				<br>
+			</div>
+			<div class="removable_field">
+				Strona www:
+				<input type="text" name="www" pattern="(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})" placeholder="www.example.com" required> 
+				<button onclick="removethis(event)">X</button>
+				<br>
+			</div>
+			<div class="removable_field">
+				Ścieżka dysku: 
+				<input type="text" name="windirbig" pattern="[a-zA-Z]:(\\(windows|windows|winnt|win|dos|msdos))\\.+" placeholder="c:\WinDows\user" required> 
+				<button onclick="removethis(event)">X</button>
+				<br>
+			</div>
+			<div class="removable_field">
+				Ścieżka dysku: 
+				<input type="text" name="windir" pattern="[a-zA-Z]:(\\([Ww]indows|[Ww]innt|[Ww]in|[Dd]os|[Mm]sdos))\\.+" placeholder="c:\windows\user" required> 
+				<button onclick="removethis(event)">X</button>
+				<br>
+			</div>
+			<div class="removable_field">
+				Ścieżka do pliku w katalogu /etc: 
+				<input type="text" name="etcdir" pattern="\/etc(\/[a-zA-Z]+)+" placeholder="/etc/passwd" required> 
+				<button onclick="removethis(event)">X</button>
+				<br>
+			</div>
+			<div class="removable_field" ondragover="dragover(event)">
+				Adres ipv6:
+				<input type="text" name="ipv6addr" pattern="(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))" placeholder="::ffff:c000:0280" required> 
+				<button onclick="removethis(event)">X</button>
+				<br>
+			</div>
+			<div class="removable_field" draggable="true" id="phonenb" ondragstart="dragstart(event)">
+				Numer telefonu:
+				<input type="text" name="phonenb" pattern="(\d{9}|((\d{3}[\s-\/]{0,1}){3}))" placeholder="123 456 789" required> 
+				<button onclick="removethis(event)">X</button>
+				<br>
+			</div>
+			<input type="submit">
+		</form>
+		<button onclick="savedata()">save</button>
+		<button>load</button>
+		<script>
+			var db;
+window.onload = () => {
+
+  //Open Database
+  var request = indexedDB.open('userData', 1);
+
+  request.onupgradeneeded = function(e) {
+    db = e.target.result;
+  
+
+    if(!db.objectStoreNames.contains('user')){
+      var objectStore = db.createObjectStore('user', { keyPath: 'id' });
+  
+      objectStore.createIndex('id', 'id', { unique: true });
+      objectStore.createIndex('data', 'data', { unique: false });
+
+      objectStore.transaction.oncompleted = (e)=> {
+        console.log('Object store');
+        const transaction = db.transaction(['user'], 'readwrite');
+        const objectStore = transaction.objectStore('user');
+
+        // Add new user
+        const request = objectStore.add(getUserData());
+        request.onsuccess = ()=> {
+            console.log(`New user added, email: ${request.result}`);
+        }
+
+        request.onerror = (err)=> {
+            console.error(`Error to add new user: ${err}`)
+        }
+      }
+    }
+  }
+}
+
+function savedata() {
+	const fields = ["email", "postal", "nip", "dowod", "ip", "www", "windirbig", "windir", "etcdir", "ipv6addr", "phonenb"];
+	var data = {}
+	for (var i of fields) {
+		data[i] = document.forms[0][i].value;
+	}
+	console.log("data", data);
+	const transaction = db.transaction(['user'], 'readwrite');
+	const objectStore = transaction.objectStore('user');
+	const request = objectStore.get(0);
+
+	request.onsuccess = () => {
+		const updateRequest = objectStore.put(data);
+
+		updateRequest.onsuccess = () => {
+			console.log(`Estudent updated, email: ${updateRequest.result}`);
+		}
+	}
+}
+			// function savedata() {
+			// 	if (!window.indexedDB) {
+			// 		alert("No indexeddb here");
+			// 	} else {
+			// 		var request = window.indexedDB.open("test", 3);
+					
+			// 		request.onerror = function(e) {
+			// 			console.log("Error happened ", e);
+			// 		}
+
+			// 		request.onupgradeneeded = function() {
+			// 			var db = request.result;
+			// 			if (!db.objectStoreNames.contains('dane')) { // if there's no "books" store
+			// 				var store = db.createObjectStore('dane', {keyPath: 'id'}); // create it
+			// 				var index = db.createIndex("dataindex", ["data.data"]);
+			// 			}
+			// 			console.log("upgrade");
+			// 		};
+
+			// 		request.onsuccess = function(e) {
+			// 			var db = request.result;
+						
+			// 			const fields = ["email", "postal", "nip", "dowod", "ip", "www", "windirbig", "windir", "etcdir", "ipv6addr", "phonenb"];
+			// 			var data = {}
+			// 			for (var i of fields) {
+			// 				data[i] = document.forms[0][i].value;
+			// 			}
+			// 			console.log("data", data);
+
+			// 			db.onerror = (e) => {
+			// 				console.log("Database error: " + e);
+			// 			}
+
+			// 			var tx = db.transaction("dane", "readwrite");
+			// 			var store = tx.objectStore("dane");
+			// 			var index = store.index("dataindex");
+
+			// 			let put = store.put({id: 0, data: data});
+			// 			console.log("Data putted");
+			// 			// request.onsuccess = function() { // (4)
+			// 			// 	console.log("dane zapisane", request.result);
+			// 			// };
+
+			// 			// request.onerror = function() {
+			// 			// 	console.log("Error", request.error);
+			// 			// };
+			// 		}
+
+			// 	}
+			// }
+
+			var fields = document.getElementsByClassName('removable_field');
+			// console.log(fields);
+
+			var draggableelement = null;
+
+			function dragstart(event) {
+				event.dataTransfer.setData('text/plain', event.target.id);
+				
+  event
+    .target
+    .style
+    .backgroundColor = 'yellow';
+
+				draggableelement = event.target;
+			}
+			
+			function dragover(event) {
+				event.preventDefault();
+				event.target.style.background = 'pink';
+			}
+			function dragleave(event) {
+				event.preventDefault();
+				event.target.style.background = 'none';
+			}
+
+			function dropp(event) {
+    			event.preventDefault();
+				console.log("dropped");
+				let dropzone = event.target;
+				event.target.style.background = 'none';
+				draggableelement.style.background = 'none';
+				var temp = event.target.innerHTML + "";
+				document.forms[0].insertBefore(draggableelement, event.target.nextSibling);
+				document.forms[0].insertBefore(event.target.nextSibling, draggableelement);
+				// draggableelement.innerHTML = temp;
+				draggableelement = null;
+				event.dataTransfer.clearData();
+			}
+
+			for (let e of fields) {
+				e.addEventListener('dragstart', dragstart);
+				e.addEventListener('drop', dropp);
+				e.addEventListener('dragover', dragover);
+				e.addEventListener('dragleave', dragleave);
+				e.setAttribute('draggable', true);
+				// console.log(e.addEventListener('click', () => {console.log('test')}));
+			}
+
+
+
+			function removethis(e) {
+				e.target.parentElement.remove();
+			}
+		</script>
+	</body>
+</html>
