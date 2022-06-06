@@ -81,11 +81,10 @@
 			</div>
 			<div class="removable_field" draggable="true" id="phonenb" ondragstart="dragstart(event)">
 				Numer telefonu:
-				<input type="text" name="phonenb" pattern="(\d{9}|((\d{3}[\s-\/]{0,1}){3}))" placeholder="123 456 789" required> 
+				<input type="text" name="phonenb" pattern="([0-9]{9}|(([0-9]{3}(\s|-|\/){0,1}){3}))" placeholder="123 456 789" required> 
 				<button onclick="removethis(event)">X</button>
 				<br>
 			</div>
-			<input type="submit">
 		</form>
 		<button onclick="savedata()">save</button>
 		<button onclick="loaddata()">load</button>

@@ -36,6 +36,7 @@
 				margin: 5px;
 			}
 		</style>
+		<script src="../genData.js" type="text/javascript"></script>
 	</head>
 	<body>
 		<form>
@@ -107,6 +108,7 @@
 			</div>
 		</form>
 		<button onclick="savedata()">save</button>
+		<button onclick="genData()">Generate data</button>
 		<!-- <button onclick="loaddata()">load</button> -->
 		<br>
 		<input type="text" id="search_bar" onkeyup="searchUser()" placeholder="Wyszukaj użytkowników">
@@ -138,7 +140,7 @@
 					}
 
 					request.onsuccess = event => {
-						reloadList();
+						// reloadList();
 						// console.log("Result: ");
 						// var div = document.getElementById("saved_users");
 						// var ul = document.createElement("ul");
@@ -205,10 +207,11 @@
 						for (var r of request.result) {
 							var li = document.createElement("li");
 							li.innerHTML = `<span onclick="loadByKey('${r.myKey}')">${r.myKey}</span><span onclick="deleteItem('${r.myKey}')">X</span>`;
-							loadedItems.push(r.myKey);
+							loadedItems.push(r.data);
 							ul.appendChild(li);
 						}
 						div.appendChild(ul);
+						console.log(request.result);
 
 						if (searchBar.value !== "") {
 							searchUser();
